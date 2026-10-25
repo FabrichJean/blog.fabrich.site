@@ -1,0 +1,30 @@
+<%- include('../partials/admin-head', { path: '/newsletter' }) %>
+<div class="head-row">
+  <h1>Newsletter</h1>
+  <a class="btn ghost" href="/admin/newsletter/export.csv">Exporter (CSV)</a>
+</div>
+<p><b><%= confirmed %></b> abonné<%= confirmed > 1 ? 's' : '' %> confirmé<%= confirmed > 1 ? 's' : '' %> sur <%= total %> inscription<%= total > 1 ? 's' : '' %>.</p>
+<% if (mailReady) { %>
+<p class="notice ok">E-mail configuré : double confirmation activée, envoi possible depuis la page de chaque article publié.</p>
+<% } else { %>
+<p class="notice err">SMTP non configuré : les inscriptions sont actives sans confirmation et l'envoi est désactivé. Définissez <code>SMTP_URL</code> et <code>MAIL_FROM</code> dans <code>.env</code> (voir README).</p>
+<% } %>
+<table class="table">
+  <thead><tr><th>E-mail</th><th>Langue</th><th>Statut</th><th>Inscrit le</th><th></th></tr></thead>
+  <tbody>
+  <% rows.forEach(s => { %>
+    <tr>
+      <td><%= s.email %></td><td><%= s.lang.toUpperCase() %></td>
+      <td><span class="badge <%= s.confirmed ? 'published' : '' %>"><%= s.confirmed ? 'confirmé' : 'en attente' %></span></td>
+      <td><%= fmtDateTime(s.created_at) %></td>
+      <td class="actions">
+        <form method="post" action="/admin/newsletter/<%= s.id %>/delete" data-confirm="Supprimer cet abonné ?">
+          <input type="hidden" name="_csrf" value="<%= csrf %>"><button class="link danger">Supprimer</button>
+        </form>
+      </td>
+    </tr>
+  <% }) %>
+  <% if (!rows.length) { %><tr><td colspan="5" class="muted">Aucun abonné.</td></tr><% } %>
+  </tbody>
+</table>
+<%- include('../partials/admin-foot') %>

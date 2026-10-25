@@ -1,0 +1,116 @@
+<%- include('../partials/admin-head', { path: '/posts' }) %>
+<% const isNew = !post.id; %>
+<% const langOptions = [...new Set([...langs, post.lang])]; %>
+<div class="head-row">
+  <h1><%= isNew ? 'Nouvel article' : 'Modifier l\'article' %></h1>
+  <% if (!isNew && post.status === 'published') { %><a href="<%= post.lang === siteAll.default_lang ? '' : '/' + post.lang %>/post/<%= post.slug %>" target="_blank" rel="noopener">Voir sur le site ↗</a><% } %>
+</div>
+<% if (error) { %><p class="notice err" role="alert"><%= error %></p><% } %>
+<form method="post" enctype="multipart/form-data" action="/admin/posts/<%= isNew ? 'new' : post.id + '/edit' %>" class="editor-layout">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="editor-main">
+    <label>Titre <input name="title" class="title-input" required maxlength="200" value="<%= post.title %>" placeholder="Titre de l'article"></label>
+    <div class="toolbar" id="toolbar" role="toolbar" aria-label="Mise en forme">
+      <button type="button" data-md="bold" title="Gras"><b>B</b></button>
+      <button type="button" data-md="italic" title="Italique"><i>I</i></button>
+      <button type="button" data-md="h2" title="Titre">H2</button>
+      <button type="button" data-md="h3" title="Sous-titre">H3</button>
+      <button type="button" data-md="link" title="Lien">Lien</button>
+      <button type="button" data-md="quote" title="Citation">❝</button>
+      <button type="button" data-md="ul" title="Liste">• Liste</button>
+      <button type="button" data-md="code" title="Code">&lt;/&gt;</button>
+      <button type="button" id="imgBtn" title="Insérer une image">Image</button>
+      <input type="file" id="imgFile" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
+      <span class="spacer"></span>
+      <button type="button" id="previewBtn" aria-pressed="false">Aperçu</button>
+    </div>
+    <textarea id="body" name="body_md" rows="24" placeholder="Écrivez en Markdown…"><%= post.body_md %></textarea>
+    <div id="preview" class="prose preview" hidden></div>
+    <p id="editorMsg" class="muted small" role="status"></p>
+    <label>Extrait (facultatif, affiché dans les listes et le SEO)
+      <textarea name="excerpt" rows="2" maxlength="400"><%= post.excerpt %></textarea></label>
+  </div>
+  <aside class="editor-side">
+    <section class="panel">
+      <h3>Publication</h3>
+      <label>Statut
+        <select name="status">
+          <option value="draft" <%= post.status === 'draft' ? 'selected' : '' %>>Brouillon</option>
+          <option value="published" <%= post.status === 'published' ? 'selected' : '' %>>Publié</option>
+        </select></label>
+      <label>Date de publication <small class="muted">(future = programmé)</small>
+        <input type="datetime-local" name="published_at" value="<%= publishedAtValue %>"></label>
+      <button class="btn" type="submit">Enregistrer</button>
+    </section>
+    <section class="panel">
+      <h3>Langue et traduction</h3>
+      <label>Langue de l'article
+        <select name="lang"><% langOptions.forEach(l => { %><option value="<%= l %>" <%= post.lang === l ? 'selected' : '' %>><%= langNames[l] %></option><% }) %></select></label>
+      <% if (langs.length > 1 || translationOf) { %>
+      <label>Traduction de… <small class="muted">(lie les deux versions)</small>
+        <select name="translation_of">
+          <option value="">— Article indépendant —</option>
+          <% otherPosts.forEach(o => { %><option value="<%= o.id %>" <%= String(o.id) === String(translationOf) ? 'selected' : '' %>>[<%= o.lang.toUpperCase() %>] <%= o.title.slice(0, 60) %></option><% }) %>
+        </select></label>
+      <% if (!isNew) { %>
+        <% langs.filter(l => l !== post.lang && !(typeof siblings !== 'undefined' && siblings.some(s => s.lang === l))).forEach(l => { %>
+        <a class="small" href="/admin/posts/new?translate=<%= post.id %>&lang=<%= l %>">+ Créer la version <%= langNames[l] %></a><br>
+        <% }) %>
+      <% } %>
+      <% } %>
+    </section>
+    <section class="panel">
+      <h3>Classement</h3>
+      <label>Catégorie <% if (langs.length > 1) { %><small class="muted">(même langue que l'article)</small><% } %>
+        <select name="category_id">
+          <option value="">— Aucune —</option>
+          <% categories.forEach(c => { %><option value="<%= c.id %>" <%= Number(post.category_id) === c.id ? 'selected' : '' %>><%= c.name %><%= langs.length > 1 ? ' [' + c.lang.toUpperCase() + ']' : '' %></option><% }) %>
+        </select></label>
+      <label>Tags <small class="muted">(séparés par des virgules)</small>
+        <input name="tags" value="<%= tagsValue %>" placeholder="voyage, photo"></label>
+      <label>Adresse (slug) <small class="muted">(auto si vide)</small>
+        <input name="slug" value="<%= post.slug || '' %>" maxlength="80"></label>
+    </section>
+    <section class="panel">
+      <h3>Image de couverture</h3>
+      <% if (post.cover) { %>
+        <img class="thumb" src="<%= post.cover %>" alt="">
+        <label class="inline"><input type="checkbox" name="remove_cover" value="1"> Supprimer l'image</label>
+      <% } %>
+      <input type="file" name="cover" accept="image/jpeg,image/png,image/gif,image/webp">
+      <p class="muted small">JPEG, PNG, GIF ou WebP — 5 Mo max.</p>
+    </section>
+    <% if (!isNew) { %>
+    <section class="panel">
+      <h3>Partage privé</h3>
+      <% if (shareUrl) { %>
+        <p class="small muted">Toute personne ayant ce lien peut lire l'article, même en brouillon.</p>
+        <input readonly value="<%= shareUrl %>" data-select aria-label="Lien de partage">
+        <p class="btn-row"><button class="btn ghost" form="shareForm" name="action" value="create" data-confirm="Générer un nouveau lien invalidera l'ancien. Continuer ?">Régénérer</button>
+        <button class="btn ghost danger" form="shareForm" name="action" value="revoke">Révoquer</button></p>
+      <% } else { %>
+        <p class="small muted">Créez un lien secret pour faire relire cet article avant publication.</p>
+        <button class="btn ghost" form="shareForm" name="action" value="create">Créer un lien</button>
+      <% } %>
+    </section>
+    <% if (user.role === 'admin') { %>
+    <section class="panel">
+      <h3>Newsletter</h3>
+      <% if (post.newsletter_sent_at) { %><p class="small muted">Envoyé le <%= fmtDateTime(post.newsletter_sent_at) %>.</p><% } %>
+      <p class="small muted"><%= subscribersForLang %> abonné<%= subscribersForLang > 1 ? 's' : '' %> confirmé<%= subscribersForLang > 1 ? 's' : '' %> (<%= post.lang.toUpperCase() %>).</p>
+      <% if (!mailReady) { %><p class="small muted">Envoi indisponible : configurez <code>SMTP_URL</code>.</p>
+      <% } else if (post.status === 'published') { %>
+        <button class="btn ghost" form="newsletterForm"
+          data-confirm="Envoyer cet article à <%= subscribersForLang %> abonné(s) ?<%= post.newsletter_sent_at ? ' Il a déjà été envoyé une fois.' : '' %>">Envoyer aux abonnés</button>
+      <% } else { %><p class="small muted">Publiez l'article pour pouvoir l'envoyer.</p><% } %>
+    </section>
+    <% } %>
+    <% } %>
+  </aside>
+</form>
+<% if (!isNew) { %>
+<form id="shareForm" method="post" action="/admin/posts/<%= post.id %>/share"><input type="hidden" name="_csrf" value="<%= csrf %>"></form>
+<form id="newsletterForm" method="post" action="/admin/posts/<%= post.id %>/newsletter"><input type="hidden" name="_csrf" value="<%= csrf %>"></form>
+<% } %>
+<script src="/static/js/editor.js"></script>
+<%- include('../partials/admin-foot') %>

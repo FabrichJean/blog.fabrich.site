@@ -1,0 +1,45 @@
+<%- include('../partials/admin-head', { path: '/categories' }) %>
+<h1>Catégories</h1>
+<div class="cols">
+  <section>
+    <table class="table">
+      <thead><tr><th>Nom / description</th><th></th><th>Articles</th><th></th></tr></thead>
+      <tbody>
+      <% rows.forEach(c => { %>
+        <tr>
+          <td colspan="3">
+            <form method="post" action="/admin/categories" class="inline-form">
+              <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="id" value="<%= c.id %>">
+              <span class="badge"><%= c.lang.toUpperCase() %></span>
+              <input name="name" value="<%= c.name %>" required maxlength="50" aria-label="Nom">
+              <input name="description" value="<%= c.description %>" maxlength="200" aria-label="Description">
+              <span class="muted"><%= c.n %></span>
+              <button class="btn ghost">Enregistrer</button>
+            </form>
+          </td>
+          <td class="actions">
+            <form method="post" action="/admin/categories/<%= c.id %>/delete" data-confirm="Supprimer cette catégorie ?">
+              <input type="hidden" name="_csrf" value="<%= csrf %>"><button class="link danger">Supprimer</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!rows.length) { %><tr><td colspan="4" class="muted">Aucune catégorie.</td></tr><% } %>
+      </tbody>
+    </table>
+  </section>
+  <section class="panel">
+    <h3>Nouvelle catégorie</h3>
+    <form method="post" action="/admin/categories" class="form">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <label>Nom <input name="name" required maxlength="50"></label>
+      <% if (langs.length > 1) { %>
+      <label>Langue
+        <select name="lang"><% langs.forEach(l => { %><option value="<%= l %>"><%= langNames[l] %></option><% }) %></select></label>
+      <% } %>
+      <label>Description <input name="description" maxlength="200"></label>
+      <button class="btn">Ajouter</button>
+    </form>
+  </section>
+</div>
+<%- include('../partials/admin-foot') %>

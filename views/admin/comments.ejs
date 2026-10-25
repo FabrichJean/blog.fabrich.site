@@ -1,0 +1,22 @@
+<%- include('../partials/admin-head', { path: '/comments' }) %>
+<h1>Commentaires</h1>
+<nav class="tabs">
+  <a class="<%= status === 'pending' ? 'on' : '' %>" href="?status=pending">À modérer (<%= counts.pending || 0 %>)</a>
+  <a class="<%= status === 'approved' ? 'on' : '' %>" href="?status=approved">Approuvés (<%= counts.approved || 0 %>)</a>
+  <a class="<%= status === 'spam' ? 'on' : '' %>" href="?status=spam">Spam (<%= counts.spam || 0 %>)</a>
+</nav>
+<% rows.forEach(c => { %>
+<div class="panel comment-row">
+  <p class="meta"><strong><%= c.author_name %></strong> &lt;<%= c.author_email %>&gt; · <%= fmtDateTime(c.created_at) %>
+    · sur <a href="<%= c.post_lang === siteAll.default_lang ? '' : '/' + c.post_lang %>/post/<%= c.post_slug %>#comments" target="_blank" rel="noopener"><%= c.post_title %></a></p>
+  <p class="pre"><%= c.body %></p>
+  <form method="post" action="/admin/comments/<%= c.id %>" class="btn-row">
+    <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="back" value="<%= status %>">
+    <% if (c.status !== 'approved') { %><button class="btn" name="action" value="approved">Approuver</button><% } %>
+    <% if (c.status !== 'spam') { %><button class="btn ghost" name="action" value="spam">Spam</button><% } %>
+    <button class="btn ghost danger" name="action" value="delete" data-confirm="Supprimer ce commentaire ?">Supprimer</button>
+  </form>
+</div>
+<% }) %>
+<% if (!rows.length) { %><p class="muted">Rien ici.</p><% } %>
+<%- include('../partials/admin-foot') %>
