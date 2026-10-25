@@ -36,7 +36,7 @@ Les visiteurs non connectés qui arrivent sur l'accueil (`/`, `/en/`…) voient 
 - **Look** : thème clair/sombre (préférence du système, bascule mémorisée ; `?theme=light|dark` pour forcer), polices auto-hébergées (`public/fonts`, licence OFL), barre de rubriques collante, « À la une » + grille, couverture générative quand l'article n'a pas d'image, barre de progression de lecture, barre d'onglets sur mobile.
 - **Raccourcis clavier** : `/` recherche, `j` / `k` carte suivante / précédente, `u` voter, `b` favori, `o` ouvrir.
 - **Démo** : `DATA_DIR=./data-demo UPLOAD_DIR=./data-demo/uploads npm run demo` remplit une base vide avec des articles, sources et comptes d'essai (`demo@example.com` / `lecteur@example.com`, mot de passe `demodemo`).
-- **Comptes lecteurs** (`/signup`, `/login`) : votes (▲), favoris, historique, **série de lecture** (jours consécutifs), profil, suppression du compte. Les lecteurs n'ont pas accès à `/admin`. Pas de vérification d'e-mail à l'inscription (limitée par IP) : si le spam devient un sujet, gardez la modération des commentaires activée.
+- **Comptes lecteurs** (`/signup`, `/login`) : votes (▲), favoris, historique, **série de lecture** (jours consécutifs), profil, suppression du compte. Les lecteurs n'ont pas accès à `/admin`. **Inscription avec code OTP** : après le formulaire, un code à 6 chiffres est envoyé à l'adresse indiquée et le compte n'est créé qu'une fois le code saisi (10 min de validité, 5 essais, renvoi toutes les 60 s, 5 envois max ; code haché en base). L'envoi passe par un modèle d'e-mail (API emaildo : `EMAILDO_API_KEY`, `EMAILDO_SERVICE_ID`, `EMAILDO_OTP_TEMPLATE_ID`, variables du modèle : `{{prenom}}`, `{{code_otp}}`, `{{entreprise}}`), à défaut par SMTP (`SMTP_URL` / `MAIL_FROM`). **Sans envoi configuré** : en développement le code s'affiche dans la console du serveur ; avec `NODE_ENV=production` l'inscription est refusée (jamais de compte sans adresse vérifiée).
 - **Pour vous** : classement calculé à partir des tags/sources/auteurs suivis, des tags des articles votés ou mis en favori, de la fraîcheur et de la popularité ; les articles déjà lus remontent moins. **Populaires** : engagement (votes, commentaires, vues) pondéré par l'âge. Le classement porte sur les 500 articles publiés les plus récents de la langue.
 - **Explorer** : `/tags` et `/sources` avec boutons Suivre.
 - **Sources RSS** (admin > Sources) : import automatique de flux RSS/Atom (toutes les `FEED_REFRESH_MINUTES` min, 60 par défaut, 0 pour désactiver). Seuls titre, résumé, image HTTPS et tags sont repris ; la fiche mène à l'article d'origine et reste ouverte aux votes et commentaires (non indexée). Les adresses internes (localhost, réseau privé, métadonnées cloud) sont refusées, y compris après redirection.
@@ -77,7 +77,8 @@ Dans **Réglages > Apparence** : couleur d'accent (clair/sombre, texte automatiq
 | `NODE_ENV=production` | Cookies `Secure` + HSTS (à utiliser derrière HTTPS) |
 | `TRUST_PROXY=true` | Derrière nginx / Caddy (IP réelle pour les limiteurs) |
 | `DATA_DIR`, `UPLOAD_DIR` | Emplacement de la base SQLite et des images |
-| `SMTP_URL`, `MAIL_FROM` | Envoi des e-mails de la newsletter |
+| `SMTP_URL`, `MAIL_FROM` | Envoi des e-mails de la newsletter (et OTP en repli) |
+| `EMAILDO_URL`, `EMAILDO_API_KEY`, `EMAILDO_SERVICE_ID`, `EMAILDO_OTP_TEMPLATE_ID` | Envoi du code OTP par modèle d'e-mail (clé secrète : dans `.env`, jamais commitée) |
 | `FEED_REFRESH_MINUTES` | Fréquence d'import des flux RSS (60 ; 0 = désactivé) |
 
 ## Déploiement
