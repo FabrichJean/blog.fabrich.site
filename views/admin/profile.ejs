@@ -1,0 +1,15 @@
+<%- include('../partials/admin-head', { path: '/profile' }) %>
+<h1>Mon profil</h1>
+<% if (error) { %><p class="notice err" role="alert"><%= error %></p><% } %>
+<form method="post" action="/admin/profile" class="form narrow">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <label>Nom affiché <input name="display_name" required maxlength="60" value="<%= me.display_name %>"></label>
+  <label>E-mail <input type="email" name="email" required value="<%= me.email %>"></label>
+  <label>Bio <textarea name="bio" rows="3" maxlength="300"><%= me.bio %></textarea></label>
+  <fieldset><legend>Changer le mot de passe</legend>
+    <label>Mot de passe actuel <input type="password" name="current_password" autocomplete="current-password"></label>
+    <label>Nouveau mot de passe <input type="password" name="new_password" minlength="8" autocomplete="new-password"></label>
+  </fieldset>
+  <button class="btn">Enregistrer</button>
+</form>
+<%- include('../partials/admin-foot') %>
