@@ -55,7 +55,8 @@ CREATE TABLE IF NOT EXISTS posts (
   source_id INTEGER REFERENCES sources(id) ON DELETE SET NULL,
   external_url TEXT,
   upvotes INTEGER NOT NULL DEFAULT 0,
-  submitted_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+  submitted_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  notified_at INTEGER
 );
 CREATE TABLE IF NOT EXISTS tags (
   id INTEGER PRIMARY KEY,
@@ -153,6 +154,16 @@ CREATE TABLE IF NOT EXISTS signup_otps (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_otps_email ON signup_otps(email);
+CREATE TABLE IF NOT EXISTS notifications (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL,
+  data TEXT NOT NULL DEFAULT '{}',
+  url TEXT NOT NULL DEFAULT '',
+  read_at INTEGER,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_notif_user ON notifications(user_id, read_at, id DESC);
 CREATE TABLE IF NOT EXISTS subscribers (
   id INTEGER PRIMARY KEY,
   email TEXT NOT NULL UNIQUE,
@@ -211,6 +222,11 @@ if (!/'reader'/.test(db.prepare("SELECT sql FROM sqlite_master WHERE name = 'use
     `);
   })();
   db.pragma('foreign_keys = ON');
+}
+// Notifications : date à laquelle les abonnés d'un article ont été prévenus (les articles existants sont considérés comme déjà notifiés).
+if (!db.prepare('PRAGMA table_info(posts)').all().some((c) => c.name === 'notified_at')) {
+  db.exec('ALTER TABLE posts ADD COLUMN notified_at INTEGER');
+  db.prepare('UPDATE posts SET notified_at = ? WHERE notified_at IS NULL').run(Date.now());
 }
 db.exec(`
 CREATE UNIQUE INDEX IF NOT EXISTS idx_posts_external ON posts(external_url) WHERE external_url IS NOT NULL;
