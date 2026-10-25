@@ -1,0 +1,57 @@
+<%- include('partials/head', { norail: true }) %>
+<header class="section-head">
+  <div><p class="kicker"><%= t('nav_profile') %></p><h1><%= me.display_name %></h1><p class="muted"><%= me.email %></p></div>
+</header>
+<% if (flash) { %><p class="notice ok" role="status"><%= flash.msg %></p><% } %>
+<% if (error) { %><p class="notice err" role="alert"><%= error %></p><% } %>
+<div class="profile-grid">
+  <section class="panel">
+    <h3><span class="flame"><%- icon('fire', 16) %></span> <%= t('streak_title') %></h3>
+    <div class="streak-body">
+      <div>
+        <p class="streak-num"><%= t('streak_days', { n: streak.current }) %></p>
+        <p class="muted small"><%= streak.current ? t('streak_longest', { n: streak.longest }) : t('streak_zero') %></p>
+      </div>
+      <div>
+        <ul class="heat" aria-hidden="true"><% streak.heat.forEach(d => { %><li class="<%= d.read ? 'on' : '' %> <%= d.today ? 'today' : '' %>" title="<%= d.day %>"></li><% }) %></ul>
+        <p class="muted small mono heat-cap"><%= t('heat_title') %></p>
+      </div>
+    </div>
+  </section>
+  <section class="panel stats">
+    <div><b><%= stats.reads %></b><span><%= t('stat_reads') %></span></div>
+    <div><b><%= stats.votes %></b><span><%= t('stat_votes') %></span></div>
+    <a href="<%= prefix %>/bookmarks"><b><%= stats.bookmarks %></b><span><%= t('stat_bookmarks') %></span></a>
+  </section>
+  <section class="panel wide-col">
+    <h3><%= t('followed_title') %></h3>
+    <% const any = followed.tags.length + followed.sources.length + followed.authors.length; %>
+    <% if (!any) { %><p class="muted"><%= t('followed_none') %> <a href="<%= prefix %>/tags"><strong><%= t('nav_tags') %></strong></a> · <a href="<%= prefix %>/sources"><strong><%= t('nav_sources') %></strong></a></p><% } %>
+    <p class="tags">
+      <% followed.tags.forEach(x => { %><a class="tag" href="<%= prefix %>/tag/<%= x.slug %>">#<%= x.name %></a><% }) %>
+      <% followed.sources.forEach(x => { %><a class="tag" href="<%= prefix %>/source/<%= x.slug %>"><%= x.name %></a><% }) %>
+      <% followed.authors.forEach(x => { %><a class="tag" href="<%= prefix %>/author/<%= x.username %>"><%= x.name %></a><% }) %>
+    </p>
+  </section>
+  <section class="panel wide-col">
+    <form method="post" action="<%= prefix %>/me" class="form">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <label><%= t('display_name') %> <input name="display_name" required maxlength="60" value="<%= me.display_name %>"></label>
+      <label><%= t('bio') %> <textarea name="bio" rows="2" maxlength="300"><%= me.bio %></textarea></label>
+      <fieldset><legend><%= t('change_password') %></legend>
+        <label><%= t('current_password') %> <input type="password" name="current_password" autocomplete="current-password"></label>
+        <label><%= t('new_password') %> <input type="password" name="new_password" minlength="8" autocomplete="new-password"></label>
+      </fieldset>
+      <div><button class="btn" type="submit"><%= t('save') %></button></div>
+    </form>
+  </section>
+  <% if (me.role === 'reader') { %>
+  <section class="panel wide-col danger-zone">
+    <p class="small muted"><%= t('delete_hint') %></p>
+    <form method="post" action="<%= prefix %>/me/delete" data-confirm="<%= t('delete_confirm') %>">
+      <input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn ghost danger small" type="submit"><%= t('delete_account') %></button>
+    </form>
+  </section>
+  <% } %>
+</div>
+<%- include('partials/foot', { norail: true }) %>

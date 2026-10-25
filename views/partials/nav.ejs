@@ -1,0 +1,16 @@
+<% const tabOn = (k) => path === '/' && typeof activeTab !== 'undefined' && activeTab === k; %>
+<nav class="sections" aria-label="<%= t('nav_feeds') %>">
+  <div class="wrap">
+    <% if (user) { %><a href="<%= prefix %>/?tab=foryou" class="<%= tabOn('foryou') ? 'on' : '' %>"><%- icon('sparkle', 16) %> <%= t('tab_foryou') %></a><% } %>
+    <a href="<%= prefix %>/?tab=popular" class="<%= tabOn('popular') ? 'on' : '' %>"><%- icon('fire', 16) %> <%= t('tab_popular') %></a>
+    <a href="<%= prefix %>/?tab=latest" class="<%= tabOn('latest') ? 'on' : '' %>"><%- icon('clock', 16) %> <%= t('tab_latest') %></a>
+    <span class="sep" aria-hidden="true"></span>
+    <a href="<%= prefix %>/tags" class="<%= path === '/tags' ? 'on' : '' %>"><%- icon('tag', 16) %> <%= t('nav_tags') %></a>
+    <a href="<%= prefix %>/sources" class="<%= path === '/sources' ? 'on' : '' %>"><%- icon('globe', 16) %> <%= t('nav_sources') %></a>
+    <% if (user) { %>
+    <a href="<%= prefix %>/bookmarks" class="<%= path === '/bookmarks' ? 'on' : '' %>"><%- icon('bookmark', 16) %> <%= t('nav_bookmarks') %></a>
+    <a href="<%= prefix %>/history" class="<%= path === '/history' ? 'on' : '' %>"><%- icon('history', 16) %> <%= t('nav_history') %></a>
+    <% } %>
+    <% (sidebar ? sidebar.categories : []).slice(0, 4).forEach(c => { %><a class="hide-sm <%= path === '/category/' + c.slug ? 'on' : '' %>" href="<%= prefix %>/category/<%= c.slug %>">§ <%= c.name %></a><% }) %>
+  </div>
+</nav>

@@ -1,0 +1,19 @@
+</main>
+<% if (!locals.norail) { %><%- include('sidebar') %><% } %>
+</div>
+<footer class="site-footer">
+  <div class="wrap">
+    <p>© <%= new Date().getFullYear() %> <strong><%= site.site_title %></strong><% if (site.footer_text) { %> — <%= site.footer_text %><% } %></p>
+    <p><a href="<%= prefix %>/rss.xml"><%= t('rss_feed') %></a> · <a href="/sitemap.xml"><%= t('sitemap') %></a></p>
+    <p class="muted small"><%= t('keys_hint') %> : <kbd>/</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>u</kbd> <kbd>b</kbd></p>
+  </div>
+</footer>
+<nav class="tabbar" aria-label="Menu">
+  <a href="<%= prefix %>/" class="<%= path === '/' ? 'on' : '' %>"><%- icon('sparkle', 20) %><span><%= t('nav_home') %></span></a>
+  <a href="<%= prefix %>/tags" class="<%= path === '/tags' ? 'on' : '' %>"><%- icon('tag', 20) %><span><%= t('nav_tags') %></span></a>
+  <a class="plus" href="<%= prefix %><%= user ? '/submit' : '/signup' %>"><span class="fab"><%- icon('plus', 22) %></span></a>
+  <a href="<%= prefix %><%= user ? '/bookmarks' : '/sources' %>" class="<%= path === (user ? '/bookmarks' : '/sources') ? 'on' : '' %>"><%- icon(user ? 'bookmark' : 'globe', 20) %><span><%= user ? t('nav_bookmarks') : t('nav_sources') %></span></a>
+  <a href="<%= prefix %><%= user ? '/me' : '/login' %>" class="<%= path === (user ? '/me' : '/login') ? 'on' : '' %>"><%- icon('user', 20) %><span><%= t('account') %></span></a>
+</nav>
+</body>
+</html>
