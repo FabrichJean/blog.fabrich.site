@@ -1,0 +1,10 @@
+<%- include('partials/head', { norail: true }) %>
+<div class="msg">
+  <h1><%= title %></h1>
+  <p><%= text %></p>
+  <% if (typeof unsubscribe !== 'undefined') { %>
+  <form method="post" action="/newsletter/unsubscribe/<%= unsubscribe.token %>"><button class="btn"><%= t('nl_unsub_btn') %></button></form>
+  <% } %>
+  <p><a href="<%= prefix %>/"><strong>← <%= t('back_home') %></strong></a></p>
+</div>
+<%- include('partials/foot', { norail: true }) %>

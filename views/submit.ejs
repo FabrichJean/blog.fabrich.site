@@ -1,0 +1,20 @@
+<%- include('partials/head', { norail: true }) %>
+<div class="msg wide">
+  <h1><%= t('submit_title') %></h1>
+  <p class="muted"><%= t('submit_intro') %></p>
+  <% if (error) { %><p class="notice err" role="alert"><%= error %></p><% } %>
+  <form method="post" action="<%= prefix %>/submit" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <label><%= t('submit_url') %> <input type="url" name="url" required maxlength="1000" placeholder="https://" value="<%= v.url || '' %>"></label>
+    <label><%= t('submit_name') %> <input name="title" maxlength="200" value="<%= v.title || '' %>"></label>
+    <label><%= t('submit_desc') %> <textarea name="description" rows="3" maxlength="300"><%= v.description || '' %></textarea></label>
+    <div class="row">
+      <label><%= t('submit_tags') %> <input name="tags" maxlength="120" value="<%= v.tags || '' %>"></label>
+      <% if (langs.length > 1) { %>
+      <label><%= t('submit_lang') %> <select name="lang"><% langs.forEach(l => { %><option value="<%= l %>" <%= v.lang === l ? 'selected' : '' %>><%= langNames[l] %></option><% }) %></select></label>
+      <% } %>
+    </div>
+    <div><button class="btn" type="submit"><%= t('submit_send') %></button></div>
+  </form>
+</div>
+<%- include('partials/foot', { norail: true }) %>

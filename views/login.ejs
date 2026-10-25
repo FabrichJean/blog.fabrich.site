@@ -1,0 +1,19 @@
+<%- include('partials/head', { norail: true }) %>
+<div class="auth">
+  <div class="auth-art">
+    <h2><%= site.site_title %></h2>
+    <ul><li><%= t('auth_bullet1') %></li><li><%= t('auth_bullet2') %></li><li><%= t('auth_bullet3') %></li></ul>
+  </div>
+  <div class="auth-form">
+    <h1><%= t('login') %></h1>
+    <% if (error) { %><p class="notice err" role="alert"><%= error %></p><% } %>
+    <form method="post" action="<%= prefix %>/login" class="form">
+      <input type="hidden" name="next" value="<%= next %>">
+      <label><%= t('login_id') %> <input name="email" required autofocus autocomplete="username"></label>
+      <label><%= t('password') %> <input type="password" name="password" required autocomplete="current-password"></label>
+      <div><button class="btn" type="submit"><%= t('login') %></button></div>
+    </form>
+    <p class="small"><%= t('no_account') %> <a href="<%= prefix %>/signup<%= next ? '?next=' + encodeURIComponent(next) : '' %>"><strong><%= t('signup') %></strong></a></p>
+  </div>
+</div>
+<%- include('partials/foot', { norail: true }) %>
