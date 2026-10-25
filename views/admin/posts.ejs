@@ -1,0 +1,47 @@
+<%- include('../partials/admin-head', { path: '/posts' }) %>
+<div class="head-row">
+  <h1>Articles</h1>
+  <a class="btn" href="/admin/posts/new">+ Nouvel article</a>
+</div>
+<form class="filters" method="get">
+  <input type="search" name="q" placeholder="Rechercher un titre…" value="<%= q %>">
+  <select name="status" data-autosubmit>
+    <option value="">Tous les statuts</option>
+    <option value="published" <%= status === 'published' ? 'selected' : '' %>>Publiés</option>
+    <option value="draft" <%= status === 'draft' ? 'selected' : '' %>>Brouillons</option>
+  </select>
+  <% if (langs.length > 1) { %>
+  <select name="lang" data-autosubmit>
+    <option value="">Toutes les langues</option>
+    <% langs.forEach(l => { %><option value="<%= l %>" <%= lang === l ? 'selected' : '' %>><%= langNames[l] %></option><% }) %>
+  </select>
+  <% } %>
+  <button class="btn ghost">Filtrer</button>
+</form>
+<table class="table">
+  <thead><tr><th>Titre</th><th>Langue</th><th>Auteur</th><th>Catégorie</th><th>Statut</th><th>Date</th><th>Vues</th><th></th></tr></thead>
+  <tbody>
+  <% rows.forEach(p => { %>
+    <tr>
+      <td><a href="/admin/posts/<%= p.id %>/edit"><%= p.title %></a><% if (p.source_id) { %> <span class="badge">externe</span><% } %></td>
+      <td><span class="badge"><%= p.lang.toUpperCase() %></span></td>
+      <td><%= p.author_name %></td>
+      <td><%= p.category_name || '—' %></td>
+      <td>
+        <% if (p.status === 'published' && p.published_at > now) { %><span class="badge scheduled">programmé</span>
+        <% } else { %><span class="badge <%= p.status %>"><%= p.status === 'published' ? 'publié' : 'brouillon' %></span><% } %>
+      </td>
+      <td><%= fmtDateTime(p.published_at || p.created_at) %></td>
+      <td><%= p.views %></td>
+      <td class="actions">
+        <% if (p.status === 'published') { %><a href="<%= p.lang === siteAll.default_lang ? '' : '/' + p.lang %>/post/<%= p.slug %>" target="_blank" rel="noopener">Voir</a><% } %>
+        <form method="post" action="/admin/posts/<%= p.id %>/delete" data-confirm="Supprimer définitivement cet article ?">
+          <input type="hidden" name="_csrf" value="<%= csrf %>"><button class="link danger">Supprimer</button>
+        </form>
+      </td>
+    </tr>
+  <% }) %>
+  <% if (!rows.length) { %><tr><td colspan="8" class="muted">Aucun article.</td></tr><% } %>
+  </tbody>
+</table>
+<%- include('../partials/admin-foot') %>

@@ -1,0 +1,48 @@
+<%- include('../partials/admin-head', { path: '/sources' }) %>
+<h1>Sources RSS</h1>
+<p class="muted">Les articles des flux actifs sont importés automatiquement <%= refreshMinutes > 0 ? 'toutes les ' + refreshMinutes + ' min' : '(import automatique désactivé : FEED_REFRESH_MINUTES=0)' %>. Ils s'affichent dans le fil avec un lien vers l'article d'origine, sans copie du contenu.</p>
+<div class="cols">
+  <section>
+    <table class="table">
+      <thead><tr><th>Source</th><th>Langue</th><th>Articles</th><th>Abonnés</th><th>Dernier import</th><th></th></tr></thead>
+      <tbody>
+      <% rows.forEach(s => { %>
+        <tr>
+          <td><a href="/source/<%= s.slug %>" target="_blank" rel="noopener"><%= s.name %></a>
+            <% if (s.kind === 'community') { %><span class="badge">communauté</span><% } %>
+            <% if (!s.active) { %><span class="badge">pause</span><% } %>
+            <% if (s.last_error) { %><br><span class="small" class="danger-text"><%= s.last_error %></span><% } %></td>
+          <td><%= s.lang.toUpperCase() %></td><td><%= s.n %></td><td><%= s.followers %></td>
+          <td><%= s.kind === 'feed' ? fmtDateTime(s.last_fetched_at) : '—' %></td>
+          <td class="actions">
+            <% if (s.kind === 'feed') { %>
+            <form method="post" action="/admin/sources/<%= s.id %>/refresh"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="link">Importer</button></form>
+            <form method="post" action="/admin/sources/<%= s.id %>/toggle"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="link"><%= s.active ? 'Mettre en pause' : 'Réactiver' %></button></form>
+            <% } %>
+            <form method="post" action="/admin/sources/<%= s.id %>/delete" data-confirm="Supprimer cette source ? Ses articles ne sont supprimés que si la case « + articles » est cochée.">
+              <input type="hidden" name="_csrf" value="<%= csrf %>">
+              <label class="inline small"><input type="checkbox" name="delete_posts" value="1"> + articles</label>
+              <button class="link danger">Supprimer</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!rows.length) { %><tr><td colspan="6" class="muted">Aucune source. Ajoutez un flux RSS ou Atom.</td></tr><% } %>
+      </tbody>
+    </table>
+  </section>
+  <section class="panel">
+    <h3>Ajouter un flux</h3>
+    <% if (error) { %><p class="notice err" role="alert"><%= error %></p><% } %>
+    <form method="post" action="/admin/sources" class="form">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <label>Adresse du flux (RSS / Atom) <input type="url" name="feed_url" required placeholder="https://exemple.com/feed.xml" value="<%= v.feed_url || '' %>"></label>
+      <label>Nom <small class="muted">(auto si vide)</small> <input name="name" maxlength="80" value="<%= v.name || '' %>"></label>
+      <% if (langs.length > 1) { %><label>Langue des articles
+        <select name="lang"><% langs.forEach(l => { %><option value="<%= l %>" <%= v.lang === l ? 'selected' : '' %>><%= langNames[l] %></option><% }) %></select></label><% } %>
+      <button class="btn">Ajouter et importer</button>
+    </form>
+    <p class="small muted">Seuls les titres, résumés, images HTTPS et tags du flux sont repris. Les adresses internes (localhost, réseau privé) sont refusées.</p>
+  </section>
+</div>
+<%- include('../partials/admin-foot') %>

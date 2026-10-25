@@ -1,0 +1,40 @@
+<%- include('../partials/admin-head', { path: '/users' }) %>
+<h1>Utilisateurs</h1>
+<nav class="tabs"><a class="<%= readers ? '' : 'on' %>" href="/admin/users">Équipe</a><a class="<%= readers ? 'on' : '' %>" href="/admin/users?role=reader">Lecteurs inscrits</a></nav>
+<div class="cols">
+  <section>
+    <table class="table">
+      <thead><tr><th>Nom</th><th>Identifiant</th><th>E-mail</th><th>Rôle</th><th>Articles</th><th></th></tr></thead>
+      <tbody>
+      <% rows.forEach(u => { %>
+        <tr>
+          <td><%= u.display_name %></td><td><%= u.username %></td><td><%= u.email %></td>
+          <td><span class="badge <%= u.role %>"><%= u.role === 'admin' ? 'admin' : (u.role === 'reader' ? 'lecteur' : 'auteur') %></span></td><td><%= u.role === 'reader' ? u.votes + ' votes' : u.n %></td>
+          <td class="actions">
+            <% if (u.id !== user.id) { %>
+            <form method="post" action="/admin/users/<%= u.id %>/delete" data-confirm="Supprimer cet utilisateur ET tous ses articles ?">
+              <input type="hidden" name="_csrf" value="<%= csrf %>"><button class="link danger">Supprimer</button>
+            </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </section>
+  <section class="panel">
+    <h3>Nouvel utilisateur</h3>
+    <% if (error) { %><p class="notice err" role="alert"><%= error %></p><% } %>
+    <form method="post" action="/admin/users" class="form">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <label>Nom affiché <input name="display_name" required maxlength="60" value="<%= v.display_name || '' %>"></label>
+      <label>Identifiant <input name="username" required maxlength="40" value="<%= v.username || '' %>"></label>
+      <label>E-mail <input type="email" name="email" required value="<%= v.email || '' %>"></label>
+      <label>Mot de passe <input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
+      <label>Rôle
+        <select name="role"><option value="author">Auteur (ses articles)</option><option value="admin" <%= v.role === 'admin' ? 'selected' : '' %>>Administrateur</option></select></label>
+      <button class="btn">Créer</button>
+    </form>
+  </section>
+</div>
+<%- include('../partials/admin-foot') %>
