@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/theme.css?v=<%= siteAll.theme_accent.slice(1) %><%= siteAll.theme_accent_dark.slice(1) %><%= siteAll.theme_font %>">
 <link rel="stylesheet" href="/static/css/admin.css">
 <script src="/static/js/app.js" defer></script>
+<% if (user) { %><script src="/static/js/notify.js" defer></script><% } %>
 </head>
 <body class="admin">
 <% const on = (...p) => p.includes(path) ? 'on' : ''; const c = locals.counts || {}; %>
@@ -43,6 +44,7 @@
     <a href="/" target="_blank" rel="noopener"><%- icon('link', 14) %> Voir le site</a>
     <div class="me-row">
       <a class="who" href="/admin/profile"><span class="avatar sm <%= avatarClass(user.display_name) %>"><%= user.display_name.slice(0, 1).toUpperCase() %></span><span><%= user.display_name %></span></a>
+      <a class="icon-btn notif-link" href="/notifications" data-notif aria-label="Notifications" title="Notifications"><%- icon('bell', 14) %><span class="badge-n" data-notif-count <%= notifCount ? '' : 'hidden' %>><%= notifCount > 9 ? '9+' : notifCount %></span></a>
       <button type="button" class="icon-btn" data-theme-toggle aria-label="Changer de thème"><span class="when-dark"><%- icon('sun', 14) %></span><span class="when-light"><%- icon('moon', 14) %></span></button>
       <form method="post" action="/admin/logout"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="icon-btn" aria-label="Déconnexion" title="Déconnexion"><%- icon('out', 14) %></button></form>
     </div>
