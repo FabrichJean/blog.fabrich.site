@@ -3,6 +3,7 @@ const { db } = require('../db');
 const posts = require('../posts');
 const newsletter = require('../newsletter');
 const engage = require('../engage');
+const otp = require('../otp');
 const feeds = require('../feeds');
 const bcrypt = require('bcryptjs');
 const { login, logout } = require('../auth');
@@ -283,8 +284,15 @@ router.get('/signup', (req, res) => {
   authPage(res, 'signup', 200, { title: res.locals.t('signup'), error: null, v: {}, next: localPath(req.query.next, '') });
 });
 
-router.post('/signup', form, (req, res) => {
-  const { t, prefix } = res.locals;
+const OTP_COOKIE = 'su';
+const setOtpCookie = (res, value, maxAgeMs) => res.append('Set-Cookie', [`${OTP_COOKIE}=${value}`, 'Path=/', 'HttpOnly', 'SameSite=Lax', `Max-Age=${Math.floor(maxAgeMs / 1000)}`, ...(process.env.NODE_ENV === 'production' ? ['Secure'] : [])].join('; '));
+const otpToken = (req) => String(req.headers.cookie || '').split(';').map((c) => c.trim()).find((c) => c.startsWith(`${OTP_COOKIE}=`))?.slice(OTP_COOKIE.length + 1);
+const maskEmail = (e) => e.replace(/^(.{2}).*(@.*)$/, (m, a, d) => `${a}•••${d}`);
+const resendLimiter = rateLimiter({ max: 10, windowMs: 60 * 60 * 1000 });
+
+// Étape 1 : on valide le formulaire et on envoie le code ; le compte n'est PAS encore créé.
+router.post('/signup', form, async (req, res) => {
+  const { t, prefix, lang, site } = res.locals;
   const v = { display_name: String(req.body.display_name || '').trim().slice(0, 60), email: String(req.body.email || '').trim().toLowerCase() };
   const password = String(req.body.password || '');
   const next = localPath(req.body.next, '');
@@ -295,12 +303,71 @@ router.post('/signup', form, (req, res) => {
   if (!isEmail(v.email)) return fail('err_email');
   if (password.length < 8) return fail('err_password');
   if (db.prepare('SELECT 1 FROM users WHERE email = ?').get(v.email)) return fail('err_taken');
-  let username = slugify(v.display_name).replace(/-/g, '_') || 'lecteur';
-  for (let i = 2; db.prepare('SELECT 1 FROM users WHERE username = ?').get(username); i++) username = `${slugify(v.display_name).replace(/-/g, '_') || 'lecteur'}_${i}`;
+  if (!otp.canDeliver()) return fail('otp_unavailable', 503);
+  try {
+    const token = await otp.start({ email: v.email, displayName: v.display_name, passwordHash: bcrypt.hashSync(password, 12), lang, next, siteTitle: site.site_title });
+    setOtpCookie(res, token, 60 * 60 * 1000);
+    res.redirect(`${prefix}/signup/verify`);
+  } catch (err) {
+    console.error('OTP envoi :', err.message);
+    fail('otp_send_failed', 502);
+  }
+});
+
+function otpPage(req, res, row, { error = null, info = null, status = 200 } = {}) {
+  res.status(status).render('verify', {
+    title: res.locals.t('otp_title'), query: '', noindex: true, error, info,
+    email: maskEmail(row.email), devMode: !require('../mail').otpReady(), ttlMin: 10,
+  });
+}
+
+// Étape 2 : saisie du code reçu par e-mail.
+router.get('/signup/verify', (req, res) => {
+  if (req.user) return res.redirect(res.locals.prefix + '/');
+  const row = otp.find(otpToken(req));
+  if (!row) return res.redirect(`${res.locals.prefix}/signup`);
+  otpPage(req, res, row, { info: req.query.sent ? res.locals.t('otp_resent') : null });
+});
+
+router.post('/signup/verify', form, (req, res) => {
+  const { t, prefix } = res.locals;
+  const token = otpToken(req);
+  const row = otp.find(token);
+  if (!row) return res.redirect(`${prefix}/signup`);
+  const r = otp.check(token, req.body.code);
+  if (r.status === 'wrong') return otpPage(req, res, row, { status: 400, error: t('otp_wrong', { left: r.left }) });
+  if (r.status === 'locked') { otp.remove(token); return authPage(res, 'signup', 429, { title: t('signup'), error: t('otp_locked'), v: { display_name: row.display_name, email: row.email }, next: row.next }); }
+  if (r.status === 'expired') return otpPage(req, res, row, { status: 400, error: t('otp_expired') });
+  if (r.status !== 'ok') return res.redirect(`${prefix}/signup`);
+
+  if (db.prepare('SELECT 1 FROM users WHERE email = ?').get(row.email)) { otp.remove(token); return authPage(res, 'signup', 400, { title: t('signup'), error: t('err_taken'), v: {}, next: '' }); }
+  const base = slugify(row.display_name).replace(/-/g, '_') || 'lecteur';
+  let username = base;
+  for (let i = 2; db.prepare('SELECT 1 FROM users WHERE username = ?').get(username); i++) username = `${base}_${i}`;
   const id = db.prepare('INSERT INTO users(username,email,display_name,password_hash,role,created_at) VALUES(?,?,?,?,?,?)')
-    .run(username, v.email, v.display_name, bcrypt.hashSync(password, 12), 'reader', Date.now()).lastInsertRowid;
+    .run(username, row.email, row.display_name, row.password_hash, 'reader', Date.now()).lastInsertRowid;
+  otp.remove(token);
+  setOtpCookie(res, '', 0);
   login(res, id);
-  res.redirect(next || `${prefix}/tags`);
+  res.redirect(row.next || `${prefix}/tags`);
+});
+
+router.post('/signup/resend', form, async (req, res) => {
+  const { t, prefix, site } = res.locals;
+  const token = otpToken(req);
+  const row = otp.find(token);
+  if (!row) return res.redirect(`${prefix}/signup`);
+  if (resendLimiter.hit(req.ip)) return otpPage(req, res, row, { status: 429, error: t('nl_toomany') });
+  try {
+    const r = await otp.resend(token, site.site_title);
+    if (r.status === 'ok') return res.redirect(`${prefix}/signup/verify?sent=1`);
+    if (r.status === 'wait') return otpPage(req, res, row, { status: 429, error: t('otp_wait', { s: r.seconds }) });
+    if (r.status === 'max') return otpPage(req, res, row, { status: 429, error: t('otp_max') });
+    res.redirect(`${prefix}/signup`);
+  } catch (err) {
+    console.error('OTP renvoi :', err.message);
+    otpPage(req, res, row, { status: 502, error: t('otp_send_failed') });
+  }
 });
 
 router.get('/login', (req, res) => {
