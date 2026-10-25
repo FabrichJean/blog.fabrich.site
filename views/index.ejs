@@ -1,0 +1,34 @@
+<%- include('partials/head') %>
+<% const feature = !query && !locals.plainGrid && page === 1 && posts.length >= 3 && tabs !== null; %>
+<% if (heading) { %>
+<header class="section-head">
+  <div>
+    <h1><%= heading %></h1>
+    <% if (subtitle) { %><p><%= subtitle %></p><% } %>
+  </div>
+  <% if (follow) { %><%- include('partials/follow', { f: follow }) %><% } %>
+</header>
+<% } %>
+<% if (tabs && heading) { %>
+<nav class="tabs-inline" aria-label="Tri"><% tabs.forEach(tb => { %><a class="btn small <%= tb.active ? '' : 'ghost' %>" href="<%= tb.href %>" <%- tb.active ? 'aria-current="page"' : '' %>><%- icon(tb.icon, 14) %> <%= tb.label %></a> <% }) %></nav>
+<% } %>
+<% if (hint) { %><p class="notice"><%= hint %> <a href="<%= prefix %>/tags"><%= t('foryou_cta') %></a></p><% } %>
+<% if (!posts.length) { %>
+  <div class="empty"><span class="big">∅</span><strong><%= t('empty_title') %></strong><span><%= empty || (query ? t('no_results') : t('no_posts')) %></span></div>
+<% } %>
+
+<% if (posts.length) { %>
+  <% if (!heading && !query) { %><p class="label"><%= feature ? t('cover_story') : t('trending') %></p><% } %>
+  <div class="bento <%= feature ? '' : 'plain' %>">
+    <% if (feature) { %>
+      <%- include('partials/card', { p: posts[0], v: 'hero' }) %>
+      <%- include('partials/card', { p: posts[1], v: 'side' }) %>
+      <%- include('partials/card', { p: posts[2], v: 'side' }) %>
+      <% posts.slice(3).forEach(p => { %><%- include('partials/card', { p, v: 'std' }) %><% }) %>
+    <% } else { %>
+      <% posts.forEach(p => { %><%- include('partials/card', { p, v: 'std' }) %><% }) %>
+    <% } %>
+  </div>
+<% } %>
+<%- include('partials/pagination') %>
+<%- include('partials/foot') %>

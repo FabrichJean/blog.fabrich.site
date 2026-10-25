@@ -1,0 +1,15 @@
+<% const back = currentUrl; %>
+<div class="actions">
+  <form method="post" action="<%= prefix %>/post/<%= p.id %>/upvote" data-toggle="vote">
+    <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="next" value="<%= back %>">
+    <button type="submit" class="act up <%= p.upvoted ? 'on' : '' %>" data-act="upvote" aria-pressed="<%= p.upvoted %>" aria-label="<%= t('upvote') %>" title="<%= t('upvote') %> (u)"><%- icon('up', 16) %><span class="count"><%= p.upvotes %></span></button>
+  </form>
+  <a class="act cm" href="<%= prefix %>/post/<%= p.slug %>#comments" aria-label="<%= t('comments') %>" title="<%= t('comments') %>"><%- icon('comment', 16) %><span class="count"><%= p.comment_count %></span></a>
+  <form method="post" action="<%= prefix %>/post/<%= p.id %>/bookmark" data-toggle="bookmark">
+    <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="next" value="<%= back %>">
+    <button type="submit" class="act bm <%= p.bookmarked ? 'on' : '' %>" data-act="bookmark" aria-pressed="<%= p.bookmarked %>" aria-label="<%= p.bookmarked ? t('unbookmark') : t('bookmark') %>" title="<%= t('bookmark') %> (b)"><%- icon('bookmark', 16) %></button>
+  </form>
+  <% if (p.external_url && !locals.noExt) { %>
+  <a class="act ext" href="<%= p.external_url %>" target="_blank" rel="noopener nofollow ugc" aria-label="<%= t('read_on', { host: hostOf(p.external_url) }) %>" title="<%= t('read_on', { host: hostOf(p.external_url) }) %>"><%- icon('link', 16) %></a>
+  <% } %>
+</div>

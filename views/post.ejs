@@ -1,0 +1,101 @@
+<%- include('partials/head', { query: '', norail: true, bodyClass: preview ? '' : 'has-rail' }) %>
+<% const p = post; const name = p.source_name || p.author_name; %>
+<% if (preview) { %><p class="notice err" role="status"><%= t('draft_preview') %></p><% } %>
+<div class="article-wrap">
+  <% if (!preview) { %>
+  <aside class="article-rail" aria-label="Actions">
+    <%- include('partials/actions', { p, noExt: true }) %>
+    <button type="button" class="act" data-copy="<%= canonical || (baseUrl + prefix + '/post/' + p.slug) %>" data-copied="<%= t('link_copied') %>" aria-label="<%= t('copy_link') %>" title="<%= t('copy_link') %>"><%- icon('copy', 16) %></button>
+  </aside>
+  <% } else { %><span></span><% } %>
+
+  <article class="article-main">
+    <header class="post-head">
+      <p class="kicker">
+        <% if (p.category_name) { %><a href="<%= prefix %>/category/<%= p.category_slug %>">§ <%= p.category_name %></a> &nbsp;/&nbsp; <% } %>
+        <time datetime="<%= new Date(p.published_at || p.created_at).toISOString() %>"><%= fmtDate(p.published_at || p.created_at) %></time>
+        <% if (!external) { %> &nbsp;/&nbsp; <%= t('min_read', { n: readingTime(p.body_html) }) %><% } %>
+        &nbsp;/&nbsp; <%= t('views_count', { n: p.views }) %>
+      </p>
+      <h1><%= p.title %></h1>
+      <% if (p.excerpt && !external) { %><p class="standfirst"><%= p.excerpt %></p><% } %>
+      <p class="byline">
+        <span class="avatar sm <%= avatarClass(name) %>" aria-hidden="true"><%= name.slice(0, 1).toUpperCase() %></span>
+        <% if (p.source_slug) { %><a href="<%= prefix %>/source/<%= p.source_slug %>"><%= name %></a>
+        <% } else { %><a href="<%= prefix %>/author/<%= p.author_username %>"><%= name %></a><% } %>
+        <% if (external && p.submitter_name) { %><span class="muted small">· <%= t('shared_by', { name: p.submitter_name }) %></span><% } %>
+        <% if (user && user.role !== 'reader' && (user.role === 'admin' || user.id === p.author_id)) { %><a class="small muted" href="/admin/posts/<%= p.id %>/edit">· <%= t('edit') %></a><% } %>
+      </p>
+      <% const others = altLinks.filter(a => !a.current && a.translated); %>
+      <% if (others.length) { %><p class="muted small"><%= t('available_in') %> : <% others.forEach((a, i) => { %><%= i ? ', ' : '' %><a href="<%= a.href %>" hreflang="<%= a.lang %>"><strong><%= langNames[a.lang] %></strong></a><% }) %></p><% } %>
+    </header>
+
+    <% if (p.cover) { %><img class="cover" src="<%= p.cover %>" alt="" referrerpolicy="no-referrer"><% } %>
+
+    <% if (external) { %>
+      <div class="external-box">
+        <% if (p.excerpt) { %><p class="standfirst"><%= p.excerpt %></p><% } %>
+        <p class="muted small"><%= t('external_notice', { host: hostOf(p.external_url) }) %></p>
+        <p><a class="btn" href="<%= p.external_url %>" target="_blank" rel="noopener nofollow ugc"><%- icon('link', 16) %> <%= t('read_on', { host: hostOf(p.external_url) }) %></a></p>
+      </div>
+    <% } else { %>
+      <div class="prose"><%- p.body_html %></div>
+    <% } %>
+
+    <% if (p.tags.length) { %>
+    <div class="post-foot"><p class="tags"><% p.tags.forEach(tg => { %><a class="tag" href="<%= prefix %>/tag/<%= tg.slug %>">#<%= tg.name %></a><% }) %></p></div>
+    <% } %>
+
+    <% if (!preview) { %>
+    <% if (prev || next) { %>
+    <nav class="next-prev" aria-label="Navigation">
+      <% if (prev) { %><a href="<%= prefix %>/post/<%= prev.slug %>" rel="prev"><span class="kicker">← <%= t('previous') %></span><span class="t"><%= prev.title %></span></a><% } else { %><span></span><% } %>
+      <% if (next) { %><a href="<%= prefix %>/post/<%= next.slug %>" rel="next"><span class="kicker"><%= t('next') %> →</span><span class="t"><%= next.title %></span></a><% } %>
+    </nav>
+    <% } %>
+
+    <% if (related.length) { %>
+    <section class="related">
+      <h2><%= t('related') %></h2>
+      <div class="related-grid"><% related.forEach(r => { %>
+        <a class="chip" href="<%= prefix %>/post/<%= r.slug %>"><span><span class="name"><%= r.title %></span><span class="count"><%= fmtDate(r.published_at) %></span></span></a>
+      <% }) %></div>
+    </section>
+    <% } %>
+
+    <section id="comments" class="comments">
+      <h2><%= t('comment_title') %> <span class="muted mono small">(<%= comments.length %>)</span></h2>
+      <% comments.forEach(c => { %>
+      <div class="comment">
+        <span class="avatar sm <%= avatarClass(c.author_name) %>" aria-hidden="true"><%= c.author_name.slice(0, 1).toUpperCase() %></span>
+        <div>
+          <p class="meta mono small muted"><span class="who"><%= c.author_name %></span> · <%= fmtDate(c.created_at) %></p>
+          <p><%- String(c.body).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])).replace(/\n/g, '<br>') %></p>
+        </div>
+      </div>
+      <% }) %>
+      <% if (!comments.length) { %><p class="muted"><%= t('no_comments_yet') %></p><% } %>
+
+      <% if (site.comments_enabled === '1') { %>
+      <form method="post" action="<%= prefix %>/post/<%= p.slug %>/comment" class="form comment-form">
+        <h3><%= t('leave_comment') %></h3>
+        <% if (flash) { %><p class="notice <%= flash.ok ? 'ok' : 'err' %>" role="status"><%= flash.msg %></p><% } %>
+        <input type="hidden" name="t" value="<%= startedAt %>">
+        <div class="hp" aria-hidden="true"><label>Site web <input name="website" tabindex="-1" autocomplete="off"></label></div>
+        <% if (!user) { %>
+        <div class="row">
+          <label><%= t('name') %> <input name="name" required maxlength="60" value="<%= form.name || '' %>"></label>
+          <label><%= t('email_hidden') %> <input type="email" name="email" required maxlength="254" value="<%= form.email || '' %>"></label>
+        </div>
+        <% } %>
+        <label><%= t('message') %> <textarea name="body" rows="4" required maxlength="3000"><%= form.body || '' %></textarea></label>
+        <div><button class="btn" type="submit"><%= t('post_comment') %></button></div>
+        <% if (site.comments_moderation === '1') { %><p class="muted small"><%= t('moderated') %></p><% } %>
+      </form>
+      <% } else { %><p class="muted"><%= t('comments_closed') %></p><% } %>
+    </section>
+    <% } %>
+  </article>
+  <span></span>
+</div>
+<%- include('partials/foot', { norail: true }) %>

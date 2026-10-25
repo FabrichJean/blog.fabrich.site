@@ -1,0 +1,10 @@
+<% if (pages > 1) {
+  const qs = extra ? extra + '&' : '';
+  const href = (n) => n === 1 ? (qs ? `${basePath}?${qs.slice(0, -1)}` : basePath) : `${basePath}?${qs}page=${n}`;
+%>
+<nav class="pager" aria-label="Pagination">
+  <% if (page > 1) { %><a class="btn ghost" href="<%= href(page - 1) %>" rel="prev"><%= t('newer') %></a><% } else { %><span></span><% } %>
+  <span class="mono small muted"><%= t('page_of', { n: page, total: pages }) %></span>
+  <% if (page < pages) { %><a class="btn ghost" href="<%= href(page + 1) %>" rel="next"><%= t('older') %></a><% } else { %><span></span><% } %>
+</nav>
+<% } %>
