@@ -3,6 +3,7 @@ const { db } = require('./db');
 const { safeFetch } = require('./safe-fetch');
 const { stripText, uniqueSlug, slugify } = require('./util');
 const posts = require('./posts');
+const notify = require('./notify');
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text', parseTagValue: false, trimValues: true });
 const arr = (x) => (x == null ? [] : Array.isArray(x) ? x : [x]);
@@ -98,6 +99,7 @@ async function importSource(source, limit = 30) {
       }
     })();
     db.prepare('UPDATE sources SET last_fetched_at = ?, last_error = NULL WHERE id = ?').run(Date.now(), source.id);
+    notify.sourceBatch(source, added);
     return { added };
   } catch (err) {
     db.prepare('UPDATE sources SET last_fetched_at = ?, last_error = ? WHERE id = ?').run(Date.now(), String(err.message).slice(0, 200), source.id);

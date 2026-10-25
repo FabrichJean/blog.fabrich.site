@@ -10,6 +10,7 @@ const posts = require('../posts');
 const newsletter = require('../newsletter');
 const mail = require('../mail');
 const feeds = require('../feeds');
+const notify = require('../notify');
 const { safeFetch } = require('../safe-fetch');
 const { LANGS } = require('../i18n');
 const { FONT_LABELS, HEX } = require('../theme');
@@ -282,6 +283,7 @@ function savePost(req, res) {
   }
   db.prepare('UPDATE posts SET translation_group = ? WHERE id = ?').run(group || postId, postId);
   posts.setTags(postId, b.tags, lang);
+  notify.checkPublished();
   flashRedirect(res, `/admin/posts/${postId}/edit`, status === 'published' ? 'Article enregistré et publié.' : 'Brouillon enregistré.');
 }
 
@@ -367,8 +369,16 @@ router.get('/comments', requireAdmin, (req, res) => {
 
 router.post('/comments/:id', requireAdmin, form, verifyCsrf, (req, res) => {
   const action = req.body.action;
+  const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(req.params.id);
   if (action === 'delete') db.prepare('DELETE FROM comments WHERE id = ?').run(req.params.id);
-  else if (['approved', 'pending', 'spam'].includes(action)) db.prepare('UPDATE comments SET status = ? WHERE id = ?').run(action, req.params.id);
+  else if (['approved', 'pending', 'spam'].includes(action)) {
+    db.prepare('UPDATE comments SET status = ? WHERE id = ?').run(action, req.params.id);
+    // Première approbation : prévient l'auteur et les autres participants de la discussion.
+    if (action === 'approved' && comment && comment.status !== 'approved') {
+      const post = db.prepare('SELECT id, title, slug, lang FROM posts WHERE id = ?').get(comment.post_id);
+      if (post) notify.commentApproved(comment, post);
+    }
+  }
   flashRedirect(res, '/admin/comments?status=' + (['pending', 'approved', 'spam'].includes(req.body.back) ? req.body.back : 'pending'), 'Commentaire mis à jour.');
 });
 
@@ -591,11 +601,14 @@ router.post('/submissions/:id/approve', requireAdmin, form, verifyCsrf, async (r
     return flashRedirect(res, '/admin/submissions', 'Ce lien existait déjà : proposition refusée.');
   }
   db.prepare("UPDATE submissions SET status = 'approved', post_id = ?, reviewed_at = ? WHERE id = ?").run(postId, Date.now(), sub.id);
+  notify.submissionReviewed(sub, db.prepare('SELECT title, slug, lang FROM posts WHERE id = ?').get(postId));
   flashRedirect(res, '/admin/submissions', 'Lien publié.');
 });
 
 router.post('/submissions/:id/reject', requireAdmin, form, verifyCsrf, (req, res) => {
+  const sub = db.prepare("SELECT * FROM submissions WHERE id = ? AND status = 'pending'").get(req.params.id);
   db.prepare("UPDATE submissions SET status = 'rejected', reviewed_at = ? WHERE id = ? AND status = 'pending'").run(Date.now(), req.params.id);
+  if (sub) notify.submissionReviewed(sub, null);
   flashRedirect(res, '/admin/submissions', 'Proposition refusée.');
 });
 
