@@ -1,0 +1,18 @@
+<%- include('partials/head', { norail: true }) %>
+<header class="section-head">
+  <div><p class="kicker"><%= t('nav_profile') %></p><h1><%= t('n_title') %></h1></div>
+  <% if (notifCount) { %>
+  <form method="post" action="<%= prefix %>/notifications/read-all">
+    <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="next" value="<%= prefix %>/notifications">
+    <button class="btn ghost small" type="submit"><%= t('n_mark_all') %></button>
+  </form>
+  <% } %>
+</header>
+<% if (!items.length) { %><div class="empty"><span class="big">∅</span><span><%= t('n_none') %></span></div><% } %>
+<ul class="n-page">
+  <% items.forEach(n => { %>
+  <li><a href="<%= prefix %>/notifications/go/<%= n.id %>" class="n-item <%= n.read_at ? '' : 'unread' %>"><span class="n-text"><%= notifText(n) %></span><time class="n-time"><%= fmtDateTime(n.created_at) %></time></a></li>
+  <% }) %>
+</ul>
+<%- include('partials/pagination') %>
+<%- include('partials/foot', { norail: true }) %>

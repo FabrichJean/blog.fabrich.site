@@ -1,0 +1,21 @@
+<details class="menu notif" data-notif data-now="<%= t('n_now') %>" data-live-label="<%= t('n_live') %>">
+  <summary class="icon-btn" aria-label="<%= t('n_title') %>" title="<%= t('n_title') %>">
+    <%- icon('bell', 16) %><span class="badge-n" data-notif-count <%= notifCount ? '' : 'hidden' %>><%= notifCount > 9 ? '9+' : notifCount %></span>
+  </summary>
+  <div class="menu-pop notif-pop">
+    <div class="notif-head">
+      <strong><%= t('n_title') %></strong>
+      <form method="post" action="<%= prefix %>/notifications/read-all" data-read-all <%= notifCount ? '' : 'hidden' %>>
+        <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="next" value="<%= prefix %>/notifications">
+        <button class="link small" type="submit"><%= t('n_mark_all') %></button>
+      </form>
+    </div>
+    <ul class="notif-list" data-notif-list>
+      <% notifRecent.forEach(n => { %>
+      <li><a href="<%= prefix %>/notifications/go/<%= n.id %>" class="n-item <%= n.read_at ? '' : 'unread' %>"><span class="n-text"><%= notifText(n) %></span><time class="n-time"><%= fmtDate(n.created_at) %></time></a></li>
+      <% }) %>
+    </ul>
+    <p class="notif-empty muted small" data-notif-empty <%= notifRecent.length ? 'hidden' : '' %>><%= t('n_none') %></p>
+    <a class="notif-foot" href="<%= prefix %>/notifications"><%= t('n_see_all') %></a>
+  </div>
+</details>
