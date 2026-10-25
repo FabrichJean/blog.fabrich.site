@@ -1,0 +1,35 @@
+<aside class="rail">
+  <% if (sidebar.popular.length) { %>
+  <section class="panel">
+    <h3><%- icon('fire', 15) %> <%= t('trending') %></h3>
+    <ol class="top-list">
+      <% sidebar.popular.forEach(p => { %><li><a href="<%= prefix %>/post/<%= p.slug %>"><%= p.title %></a></li><% }) %>
+    </ol>
+  </section>
+  <% } %>
+  <% if (site.newsletter_enabled === '1') { %>
+  <section class="panel accent">
+    <h3><%- icon('mail', 15) %> <%= t('nl_title') %></h3>
+    <p><%= t('nl_text') %></p>
+    <form method="post" action="<%= prefix %>/newsletter/subscribe" class="nl">
+      <div class="hp" aria-hidden="true"><label>Site web <input name="website" tabindex="-1" autocomplete="off"></label></div>
+      <input type="email" name="email" required maxlength="254" placeholder="<%= t('nl_email') %>" aria-label="<%= t('nl_email') %>">
+      <button class="btn small" type="submit"><%= t('nl_subscribe') %></button>
+    </form>
+  </section>
+  <% } %>
+  <% if (sidebar.tags.length) { %>
+  <section class="panel">
+    <h3><%- icon('tag', 15) %> <%= t('tags') %></h3>
+    <p class="tags"><% sidebar.tags.slice(0, 14).forEach(tg => { %><a class="tag" href="<%= prefix %>/tag/<%= tg.slug %>">#<%= tg.name %></a><% }) %></p>
+    <p class="small"><a href="<%= prefix %>/tags"><strong><%= t('nav_tags') %> →</strong></a></p>
+  </section>
+  <% } %>
+  <% if (!user) { %>
+  <section class="panel">
+    <h3><%= t('about') %></h3>
+    <p class="small"><%= site.site_description %></p>
+    <a class="btn small ink" href="<%= prefix %>/signup"><%= t('signup') %></a>
+  </section>
+  <% } %>
+</aside>
