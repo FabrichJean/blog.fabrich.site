@@ -262,6 +262,20 @@ fieldset { border: 2px solid var(--line); border-radius: var(--radius); padding:
 .prose pre { background: #0f0e0b; color: #f3eee3; padding: 18px; border-radius: var(--radius); overflow-x: auto; font: .88rem/1.55 var(--mono); border: 2px solid var(--line); box-shadow: 4px 4px 0 var(--shadow); }
 .prose code { background: var(--paper-2); padding: .1em .38em; border-radius: 5px; font: .84em var(--mono); border: 1px solid var(--hair); }
 .prose pre code { background: none; padding: 0; border: 0; color: inherit; }
+/* Coloration syntaxique (le bloc de code reste sombre dans les deux thèmes) */
+.prose pre code.hljs { display: block; overflow-x: auto; }
+.hljs-comment, .hljs-quote { color: #8a8678; font-style: italic; }
+.hljs-keyword, .hljs-selector-tag, .hljs-doctag, .hljs-meta .hljs-keyword, .hljs-literal, .hljs-type { color: #ff7a59; }
+.hljs-string, .hljs-regexp, .hljs-addition, .hljs-meta .hljs-string { color: #b6e36b; }
+.hljs-number, .hljs-symbol, .hljs-bullet, .hljs-variable.constant_ { color: #f5c26b; }
+.hljs-title, .hljs-title.function_, .hljs-section { color: #7cc4ff; }
+.hljs-title.class_, .hljs-built_in, .hljs-class .hljs-title { color: #e9a8ff; }
+.hljs-attr, .hljs-attribute, .hljs-property, .hljs-params { color: #f3eee3; }
+.hljs-attr, .hljs-attribute { color: #7cc4ff; }
+.hljs-name, .hljs-tag, .hljs-selector-id, .hljs-selector-class { color: #ff7a59; }
+.hljs-meta, .hljs-link { color: #5fd3c0; }
+.hljs-deletion { color: #ff6b6b; }
+.hljs-emphasis { font-style: italic; } .hljs-strong { font-weight: 700; }
 .prose table { border-collapse: collapse; width: 100%; font-family: var(--font); font-size: .95rem; } .prose th, .prose td { border: 1.5px solid var(--line); padding: 8px 12px; } .prose th { background: var(--paper-2); }
 .prose img { border: 2px solid var(--line); border-radius: var(--radius); } .prose hr { border: 0; text-align: center; margin: 2.4em 0; } .prose hr::after { content: "✦ ✦ ✦"; color: var(--accent); letter-spacing: .5em; }
 .post-foot { margin: 32px 0 0; padding-top: 18px; border-top: 2px solid var(--line); }

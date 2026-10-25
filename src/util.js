@@ -1,4 +1,5 @@
-const { marked } = require('marked');
+const { Marked } = require('marked');
+const hljs = require('highlight.js');
 const sanitizeHtml = require('sanitize-html');
 const { db } = require('./db');
 
@@ -29,6 +30,7 @@ const SANITIZE = {
     a: ['href', 'title', 'rel'],
     img: ['src', 'alt', 'title', 'loading'],
     code: ['class'],
+    span: ['class'],
     th: ['align'],
     td: ['align'],
   },
@@ -44,8 +46,27 @@ const SANITIZE = {
       attribs: { ...attribs, loading: 'lazy' },
     }),
   },
-  allowedClasses: { code: [/^language-[\w-]+$/] },
+  allowedClasses: { code: [/^language-[\w-]+$/, 'hljs'], span: [/^hljs-[\w-]+$/] },
 };
+
+// Coloration syntaxique côté serveur (aucun script à charger, compatible CSP).
+// Langage inconnu ou absent : détection automatique limitée aux langages courants.
+const AUTO_LANGS = ['javascript', 'typescript', 'python', 'bash', 'json', 'html', 'xml', 'css', 'sql', 'yaml', 'java', 'kotlin', 'go', 'rust', 'php', 'c', 'cpp', 'diff', 'markdown', 'ini', 'dockerfile'];
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const marked = new Marked({
+  renderer: {
+    code({ text, lang }) {
+      const name = String(lang || '').trim().split(/\s+/)[0].toLowerCase();
+      let out, cls = '';
+      try {
+        if (name && hljs.getLanguage(name)) { out = hljs.highlight(text, { language: name, ignoreIllegals: true }).value; cls = ` language-${name.replace(/[^\w-]/g, '')}`; }
+        else if (!name) out = hljs.highlightAuto(text, AUTO_LANGS).value;
+        else { out = esc(text); cls = ` language-${name.replace(/[^\w-]/g, '')}`; }
+      } catch { out = esc(text); }
+      return `<pre><code class="hljs${cls}">${out}\n</code></pre>\n`;
+    },
+  },
+});
 
 // Le HTML produit est assaini : le Markdown peut contenir du HTML brut.
 function renderMarkdown(md) {
