@@ -27,6 +27,10 @@ Le port se règle dans `.env` (`PORT`) ou en ligne : `PORT=3457 npm start`.
 
 **Sécurité** : mots de passe bcrypt, sessions en base (cookie HttpOnly + SameSite), jeton CSRF sur toutes les actions admin, limitation des tentatives de connexion, HTML Markdown assaini (sanitize-html), CSP et en-têtes via helmet, uploads limités aux images (5 Mo, noms aléatoires), commentaires échappés avec pot de miel, délai minimal et limitation par IP.
 
+## Landing page
+
+Les visiteurs non connectés qui arrivent sur l'accueil (`/`, `/en/`…) voient une page de présentation : accroche, aperçu des articles du moment, chiffres réels (articles, sources, tags), fonctionnalités, étapes, FAQ et appel à l'inscription. Le fil reste accessible via `/?tab=popular`, et les lecteurs connectés arrivent directement sur le fil. Désactivable dans **Réglages** (« Page de présentation… »). Textes dans `src/i18n.js` (clés `land_*`, en français, anglais et espagnol).
+
 ## Fil, comptes lecteurs et interactions
 
 - **Look** : thème clair/sombre (préférence du système, bascule mémorisée ; `?theme=light|dark` pour forcer), polices auto-hébergées (`public/fonts`, licence OFL), barre de rubriques collante, « À la une » + grille, couverture générative quand l'article n'a pas d'image, barre de progression de lecture, barre d'onglets sur mobile.

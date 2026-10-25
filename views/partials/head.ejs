@@ -75,6 +75,8 @@
     </form>
   </div>
 </header>
-<%- include('nav') %>
+<% if (locals.landing) { %><main id="main">
+<% } else { %><%- include('nav') %>
 <div class="wrap page <%= locals.norail ? 'solo' : '' %>">
 <main id="main" class="main">
+<% } %>

@@ -51,6 +51,25 @@ function listPage(req, res, { filter = {}, heading = null, subtitle = null, titl
 
 const followState = (req, kind, id, label) => ({ kind, id, label, following: engage.isFollowing(req.user?.id, kind, id) });
 
+// Page de présentation : visiteurs non connectés arrivant sur l'accueil nu (pas d'onglet, pas de pagination).
+router.get('/', (req, res, next) => {
+  if (req.user || req.query.tab || req.query.page || res.locals.siteAll.landing_enabled !== '1') return next();
+  const { lang } = res.locals;
+  const now = Date.now();
+  const n = (sql, ...a) => db.prepare(sql).get(...a).n;
+  const top = posts.listPublished({ page: 1, perPage: 3, lang, sort: 'popular' }).posts;
+  res.locals.hreflang = true;
+  res.locals.canonical = res.locals.baseUrl + res.locals.prefix + '/';
+  res.render('landing', {
+    title: null, query: '', landing: true, top,
+    counts: {
+      posts: n("SELECT COUNT(*) n FROM posts WHERE status='published' AND published_at <= ? AND lang = ?", now, lang),
+      sources: n("SELECT COUNT(*) n FROM sources WHERE active = 1"),
+      tags: n('SELECT COUNT(*) n FROM tags WHERE lang = ?', lang),
+    },
+  });
+});
+
 router.get('/', (req, res) => {
   const { t, prefix } = res.locals;
   const loggedIn = Boolean(req.user);

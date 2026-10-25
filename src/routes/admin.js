@@ -691,6 +691,7 @@ router.post('/settings', requireAdmin, upload.single('logo'), verifyCsrf, (req, 
   setSetting('comments_enabled', b.comments_enabled ? '1' : '0');
   setSetting('comments_moderation', b.comments_moderation ? '1' : '0');
   setSetting('newsletter_enabled', b.newsletter_enabled ? '1' : '0');
+  setSetting('landing_enabled', b.landing_enabled ? '1' : '0');
 
   // Thème : valeurs validées (couleur hex, police de la liste).
   if (HEX.test(b.theme_accent || '')) setSetting('theme_accent', b.theme_accent.toLowerCase());

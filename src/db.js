@@ -215,6 +215,7 @@ const DEFAULT_SETTINGS = {
   languages: 'fr',
   default_lang: 'fr',
   newsletter_enabled: '1',
+  landing_enabled: '1',
   theme_accent: '#ff4b2b',
   theme_accent_dark: '#ff7a59',
   theme_font: 'sans',

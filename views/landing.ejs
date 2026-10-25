@@ -1,0 +1,92 @@
+<%- include('partials/head', { landing: true }) %>
+<% const tagNames = sidebar.tags.map(x => x.name); %>
+
+<section class="l-hero">
+  <div class="wrap l-hero-grid">
+    <div class="l-hero-copy">
+      <p class="label"><%= t('land_eyebrow') %></p>
+      <h1 class="l-h1"><%= t('land_h1_1') %> <span class="hl"><%= t('land_h1_2') %></span></h1>
+      <p class="l-sub"><%= t('land_sub') %></p>
+      <div class="l-ctas">
+        <a class="btn l-btn" href="<%= prefix %>/signup"><%= t('land_cta') %> <%- icon('up', 16) %></a>
+        <a class="btn ghost l-btn" href="<%= prefix %>/?tab=popular"><%= t('land_browse') %></a>
+      </div>
+      <p class="small muted"><a href="<%= prefix %>/login"><%= t('land_login') %></a></p>
+    </div>
+
+    <div class="l-stack" aria-hidden="true">
+      <% top.forEach((p, i) => { const name = p.source_name || p.author_name; %>
+      <div class="mini m<%= i %>">
+        <div class="mini-cover <%= avatarClass(name) %>"><span><%= name.slice(0, 1).toUpperCase() %></span></div>
+        <div class="mini-body">
+          <p class="meta"><%= name %> <i>/</i> <%= fmtDate(p.published_at) %></p>
+          <p class="mini-title"><%= p.title %></p>
+          <p class="mini-actions"><span><%- icon('up', 14) %> <%= p.upvotes %></span><span><%- icon('comment', 14) %> <%= p.comment_count %></span><span><%- icon('bookmark', 14) %></span></p>
+        </div>
+      </div>
+      <% }) %>
+      <% if (!top.length) { %><div class="mini m0"><div class="mini-cover c0"><span>✦</span></div></div><% } %>
+    </div>
+  </div>
+
+  <% if (tagNames.length) { %>
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <% for (let r = 0; r < 2; r++) { %><% tagNames.concat(tagNames).forEach(n => { %><span>#<%= n %></span><% }) %><% } %>
+    </div>
+  </div>
+  <% } %>
+</section>
+
+<section class="wrap l-stats">
+  <div><b><%= counts.posts %></b><span><%= t('land_stat_posts') %></span></div>
+  <div><b><%= counts.sources %></b><span><%= t('land_stat_sources') %></span></div>
+  <div><b><%= counts.tags %></b><span><%= t('land_stat_tags') %></span></div>
+</section>
+
+<% if (top.length) { %>
+<section class="wrap l-section">
+  <div class="l-head"><h2><%= t('land_now') %></h2><a class="btn ghost small" href="<%= prefix %>/?tab=popular"><%= t('land_see_all') %> →</a></div>
+  <div class="bento plain">
+    <% top.forEach(p => { %><%- include('partials/card', { p, v: 'std' }) %><% }) %>
+  </div>
+</section>
+<% } %>
+
+<section class="wrap l-section">
+  <div class="l-head"><h2><%= t('land_feat_title') %></h2></div>
+  <div class="l-features">
+    <% ['f1','f2','f3','f4','f5','f6'].forEach((k, i) => { %>
+    <article class="l-feature f<%= i %>">
+      <span class="l-num"><%= String(i + 1).padStart(2, '0') %></span>
+      <h3><%= t('land_' + k + '_t') %></h3>
+      <p><%= t('land_' + k + '_d') %></p>
+    </article>
+    <% }) %>
+  </div>
+</section>
+
+<section class="wrap l-section">
+  <div class="l-head"><h2><%= t('land_steps_title') %></h2></div>
+  <ol class="l-steps">
+    <% ['s1','s2','s3'].forEach(k => { %><li><h3><%= t('land_' + k + '_t') %></h3><p><%= t('land_' + k + '_d') %></p></li><% }) %>
+  </ol>
+</section>
+
+<section class="wrap l-section l-faq">
+  <div class="l-head"><h2><%= t('land_faq_title') %></h2></div>
+  <% ['1','2','3','4'].forEach(n => { %>
+  <details><summary><%= t('land_q' + n) %></summary><p><%= t('land_a' + n) %></p></details>
+  <% }) %>
+</section>
+
+<section class="wrap l-section">
+  <div class="l-final">
+    <div>
+      <h2><%= t('land_final_t') %></h2>
+      <p><%= t('land_final_d') %></p>
+    </div>
+    <a class="btn ink l-btn" href="<%= prefix %>/signup"><%= t('land_cta') %> <%- icon('up', 16) %></a>
+  </div>
+</section>
+<%- include('partials/foot', { landing: true }) %>

@@ -48,6 +48,7 @@
     <label>Articles par page <input type="number" name="posts_per_page" min="1" max="50" value="<%= siteAll.posts_per_page %>"></label>
     <label class="inline"><input type="checkbox" name="comments_enabled" <%= siteAll.comments_enabled === '1' ? 'checked' : '' %>> Autoriser les commentaires</label>
     <label class="inline"><input type="checkbox" name="comments_moderation" <%= siteAll.comments_moderation === '1' ? 'checked' : '' %>> Modérer les commentaires avant publication</label>
+    <label class="inline"><input type="checkbox" name="landing_enabled" <%= siteAll.landing_enabled === '1' ? 'checked' : '' %>> Page de présentation pour les visiteurs non connectés (sinon, le fil s'affiche directement)</label>
     <label class="inline"><input type="checkbox" name="newsletter_enabled" <%= siteAll.newsletter_enabled === '1' ? 'checked' : '' %>> Afficher l'inscription à la newsletter</label>
   </fieldset>
   <button class="btn">Enregistrer</button>
