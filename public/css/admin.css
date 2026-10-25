@@ -69,3 +69,4 @@ body.admin { background: var(--paper); }
 #body { font: .98rem/1.65 var(--mono); min-height: 480px; border-radius: var(--radius); }
 .preview { background: var(--card); border: 2px solid var(--line); border-radius: var(--radius); padding: 28px; min-height: 480px; }
 .thumb { border-radius: var(--radius-sm); border: 2px solid var(--line); margin-bottom: 8px; }
+.notif-link { position: relative; text-decoration: none; }

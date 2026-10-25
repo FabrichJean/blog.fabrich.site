@@ -24,6 +24,7 @@
 <link rel="stylesheet" href="/static/css/style.css">
 <link rel="stylesheet" href="/theme.css?v=<%= siteAll.theme_accent.slice(1) %><%= siteAll.theme_accent_dark.slice(1) %><%= siteAll.theme_font %>">
 <script src="/static/js/app.js" defer></script>
+<% if (user) { %><script src="/static/js/notify.js" defer></script><% } %>
 </head>
 <body class="public <%= locals.bodyClass || '' %>">
 <a class="skip" href="#main"><%= t('skip') %></a>
@@ -49,6 +50,7 @@
       <% if (user) { %>
       <% if (streakNow > 0) { %><a class="streak-chip" href="<%= prefix %>/me" title="<%= t('streak_title') %>"><%- icon('fire', 14) %> <%= streakNow %></a><% } %>
       <a class="btn small hide-sm" href="<%= prefix %>/submit"><%- icon('plus', 14) %> <%= t('submit_btn') %></a>
+      <%- include('bell') %>
       <details class="menu">
         <summary class="avatar <%= avatarClass(user.display_name) %>" aria-label="<%= t('account') %>"><%= user.display_name.slice(0, 1).toUpperCase() %></summary>
         <div class="menu-pop">
