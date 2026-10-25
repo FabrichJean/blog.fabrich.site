@@ -22,6 +22,8 @@ const publicRouter = require('./src/routes/public');
 })();
 
 const app = express();
+// Version des assets statiques (date de modification du CSS) pour contourner les caches.
+app.locals.assetV = require('fs').statSync(path.join(__dirname, 'public/css/style.css')).mtimeMs.toString(36);
 const PORT = process.env.PORT || 3000;
 const isProd = process.env.NODE_ENV === 'production';
 
