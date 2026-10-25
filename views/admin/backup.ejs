@@ -1,0 +1,25 @@
+<%- include('../partials/admin-head', { path: '/backup' }) %>
+<h1>Export / import</h1>
+<div class="cols">
+  <section class="panel">
+    <h3>Exporter</h3>
+    <p>Télécharge un fichier JSON avec tous les articles (Markdown, tags, langues et liens de traduction), les catégories et les commentaires.
+       Les comptes, mots de passe, réglages et abonnés ne sont pas inclus.</p>
+    <p class="btn-row">
+      <a class="btn" href="/admin/backup/export">Export léger</a>
+      <a class="btn ghost" href="/admin/backup/export?images=1">Export avec images de couverture</a>
+    </p>
+    <p class="small muted">Sans les images, seules les adresses des couvertures sont conservées. Pour une sauvegarde complète du serveur, copiez aussi les dossiers <code>data/</code> et <code>uploads/</code>.</p>
+  </section>
+  <section class="panel">
+    <h3>Importer</h3>
+    <p>Ajoute le contenu d'un export. Les articles dont l'adresse (slug) existe déjà sont ignorés, rien n'est écrasé. L'import est tout ou rien.</p>
+    <form method="post" enctype="multipart/form-data" action="/admin/backup/import" class="form">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <label>Fichier JSON <input type="file" name="file" accept="application/json,.json" required></label>
+      <button class="btn" data-confirm="Importer ce fichier dans le blog ?">Importer</button>
+    </form>
+    <p class="small muted">Les articles dont l'auteur n'existe pas ici vous sont attribués. Taille maximale : 50 Mo.</p>
+  </section>
+</div>
+<%- include('../partials/admin-foot') %>

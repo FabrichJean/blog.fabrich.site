@@ -1,0 +1,55 @@
+<%- include('../partials/admin-head', { path: '/settings' }) %>
+<h1>Réglages</h1>
+<form method="post" enctype="multipart/form-data" action="/admin/settings" class="form narrow">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+
+  <fieldset>
+    <legend>Langues</legend>
+    <label>Langue par défaut (URLs sans préfixe)
+      <select name="default_lang"><% Object.entries(allLangs).forEach(([code, name]) => { %><option value="<%= code %>" <%= siteAll.default_lang === code ? 'selected' : '' %>><%= name %></option><% }) %></select></label>
+    <p class="small muted">Langues supplémentaires (URLs <code>/en/…</code>, <code>/es/…</code>) :</p>
+    <% Object.entries(allLangs).filter(([c]) => c !== siteAll.default_lang).forEach(([code, name]) => { %>
+    <label class="inline"><input type="checkbox" name="languages" value="<%= code %>" <%= langs.includes(code) ? 'checked' : '' %>> <%= name %></label>
+    <% }) %>
+    <p class="small muted">Changer la langue par défaut modifie les URLs publiques des articles. L'interface d'administration reste en français.</p>
+  </fieldset>
+
+  <% Object.entries(allLangs).forEach(([code, name]) => {
+       const isDef = code === siteAll.default_lang;
+       if (!isDef && !langs.includes(code)) return;
+       const val = (k) => isDef ? siteAll[k] : (siteAll[k + '_' + code] || ''); %>
+  <fieldset>
+    <legend>Textes du site — <%= name %></legend>
+    <label>Titre du blog <input name="site_title__<%= code %>" maxlength="80" value="<%= val('site_title') %>" <%= isDef ? 'required' : '' %>></label>
+    <label>Description <input name="site_description__<%= code %>" maxlength="200" value="<%= val('site_description') %>"></label>
+    <label>Pied de page <input name="footer_text__<%= code %>" maxlength="200" value="<%= val('footer_text') %>"></label>
+  </fieldset>
+  <% }) %>
+
+  <fieldset>
+    <legend>Apparence</legend>
+    <div class="row">
+      <label>Couleur d'accent (clair) <input type="color" name="theme_accent" value="<%= siteAll.theme_accent %>"></label>
+      <label>Couleur d'accent (sombre) <input type="color" name="theme_accent_dark" value="<%= siteAll.theme_accent_dark %>"></label>
+    </div>
+    <label>Police de l'interface
+      <select name="theme_font"><% Object.entries(fonts).forEach(([k, label]) => { %><option value="<%= k %>" <%= siteAll.theme_font === k ? 'selected' : '' %>><%= label %></option><% }) %></select></label>
+    <label>Logo <small class="muted">(remplace le titre dans l'en-tête)</small>
+      <input type="file" name="logo" accept="image/jpeg,image/png,image/gif,image/webp"></label>
+    <% if (siteAll.theme_logo) { %>
+      <img class="thumb logo-thumb" src="<%= siteAll.theme_logo %>" alt="Logo actuel">
+      <label class="inline"><input type="checkbox" name="remove_logo" value="1"> Supprimer le logo</label>
+    <% } %>
+    <label class="inline"><input type="checkbox" name="reset_theme" value="1"> Rétablir les couleurs et la police par défaut</label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Contenu</legend>
+    <label>Articles par page <input type="number" name="posts_per_page" min="1" max="50" value="<%= siteAll.posts_per_page %>"></label>
+    <label class="inline"><input type="checkbox" name="comments_enabled" <%= siteAll.comments_enabled === '1' ? 'checked' : '' %>> Autoriser les commentaires</label>
+    <label class="inline"><input type="checkbox" name="comments_moderation" <%= siteAll.comments_moderation === '1' ? 'checked' : '' %>> Modérer les commentaires avant publication</label>
+    <label class="inline"><input type="checkbox" name="newsletter_enabled" <%= siteAll.newsletter_enabled === '1' ? 'checked' : '' %>> Afficher l'inscription à la newsletter</label>
+  </fieldset>
+  <button class="btn">Enregistrer</button>
+</form>
+<%- include('../partials/admin-foot') %>
