@@ -1,6 +1,7 @@
 const { XMLParser } = require('fast-xml-parser');
 const { db } = require('./db');
-const { safeFetch } = require('./safe-fetch');
+const { safeFetch, isPrivateIp } = require('./safe-fetch');
+const net = require('net');
 const { stripText, uniqueSlug, slugify } = require('./util');
 const posts = require('./posts');
 const notify = require('./notify');
@@ -9,10 +10,14 @@ const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_
 const arr = (x) => (x == null ? [] : Array.isArray(x) ? x : [x]);
 const text = (v) => (v && typeof v === 'object' ? String(v['#text'] ?? '') : String(v ?? ''));
 
+// URL http(s) publique : les adresses internes (localhost, IP privées, .local/.internal) sont refusées.
 const httpUrl = (u) => {
   try {
     const x = new URL(String(u).trim());
-    return ['http:', 'https:'].includes(x.protocol) && x.toString().length <= 1000 ? x.toString() : null;
+    if (!['http:', 'https:'].includes(x.protocol) || x.toString().length > 1000 || x.username || x.password) return null;
+    const host = x.hostname.replace(/^\[|\]$/g, '').toLowerCase();
+    if (host === 'localhost' || /\.(local|localhost|internal|lan)$/.test(host) || (net.isIP(host) && isPrivateIp(host))) return null;
+    return x.toString();
   } catch { return null; }
 };
 // Les images externes ne sont acceptées qu'en HTTPS (pas de contenu mixte).
