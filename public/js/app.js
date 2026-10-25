@@ -59,6 +59,14 @@
   // Les erreurs survenues avant l'exécution de ce script (chargement différé) sont rattrapées ici.
   document.querySelectorAll('img').forEach((img) => { if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) dropBroken(img); });
 
+  // Code OTP : ne garde que les chiffres et envoie le formulaire dès que les 6 chiffres sont saisis.
+  document.addEventListener('input', (e) => {
+    const el = e.target.closest('[data-otp]');
+    if (!el) return;
+    el.value = el.value.replace(/\D/g, '').slice(0, 6);
+    if (el.value.length === 6) el.form.requestSubmit();
+  });
+
   // Ferme le menu du compte au clic ailleurs.
   document.addEventListener('click', (e) => {
     document.querySelectorAll('details.menu[open]').forEach((d) => { if (!d.contains(e.target)) d.removeAttribute('open'); });
