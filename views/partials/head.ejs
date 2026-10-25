@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="<%= lang %>" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<% const pageTitle = title ? `${title} — ${site.site_title}` : site.site_title; %>
+<% const desc = description || site.site_description; %>
+<title><%= pageTitle %></title>
+<meta name="description" content="<%= desc %>">
+<% if (csrf) { %><meta name="csrf-token" content="<%= csrf %>"><% } %>
+<% if (noindex) { %><meta name="robots" content="noindex"><% } %>
+<% if (canonical) { %><link rel="canonical" href="<%= canonical %>"><% } %>
+<% if (hreflang) { altLinks.filter(a => a.translated !== false).forEach(a => { %><link rel="alternate" hreflang="<%= a.lang %>" href="<%= baseUrl %><%= a.href %>">
+<% }) } %>
+<link rel="alternate" type="application/rss+xml" title="<%= site.site_title %>" href="<%= prefix %>/rss.xml">
+<meta property="og:type" content="<%= ogType %>">
+<meta property="og:title" content="<%= title || site.site_title %>">
+<meta property="og:description" content="<%= desc %>">
+<% if (ogImage) { %><meta property="og:image" content="<%= ogImage %>"><meta name="twitter:card" content="summary_large_image"><% } %>
+<meta name="theme-color" content="#f3eee3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#11100d" media="(prefers-color-scheme: dark)">
+<link rel="preload" href="/static/fonts/fraunces-latin-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3a13 13 0 1 1-13 13V3z' fill='%23ff4b2b' stroke='%2316140f' stroke-width='2.500'/%3E%3C/svg%3E">
+<script src="/static/js/theme-init.js"></script>
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="stylesheet" href="/theme.css?v=<%= siteAll.theme_accent.slice(1) %><%= siteAll.theme_accent_dark.slice(1) %><%= siteAll.theme_font %>">
+<script src="/static/js/app.js" defer></script>
+</head>
+<body class="public <%= locals.bodyClass || '' %>">
+<a class="skip" href="#main"><%= t('skip') %></a>
+<div class="progress" aria-hidden="true"></div>
+<header class="masthead">
+  <div class="wrap mast-bar">
+    <span class="mast-date"><%= today %></span>
+    <span class="mast-tag"><%= site.site_description %></span>
+    <div class="mast-tools">
+      <% if (altLinks.length > 1) { %>
+      <details class="menu langmenu">
+        <summary class="lang-btn" aria-label="<%= t('language') %>"><%- flag(lang) %><span><%= lang.toUpperCase() %></span><%- icon('chev', 12) %></summary>
+        <div class="menu-pop">
+          <% altLinks.forEach(a => { %>
+          <a href="<%= a.href %>" hreflang="<%= a.lang %>" lang="<%= a.lang %>" class="<%= a.current ? 'on' : '' %> <%= a.translated === false ? 'dim' : '' %>" <%- a.current ? 'aria-current="true"' : '' %>>
+            <%- flag(a.lang) %><span><%= langNames[a.lang] %></span><% if (a.current) { %><%- icon('check', 14) %><% } %>
+          </a>
+          <% }) %>
+        </div>
+      </details>
+      <% } %>
+      <button type="button" class="icon-btn" data-theme-toggle aria-label="<%= t('theme_toggle') %>" title="<%= t('theme_toggle') %>"><span class="when-dark"><%- icon('sun', 16) %></span><span class="when-light"><%- icon('moon', 16) %></span></button>
+      <% if (user) { %>
+      <% if (streakNow > 0) { %><a class="streak-chip" href="<%= prefix %>/me" title="<%= t('streak_title') %>"><%- icon('fire', 14) %> <%= streakNow %></a><% } %>
+      <a class="btn small hide-sm" href="<%= prefix %>/submit"><%- icon('plus', 14) %> <%= t('submit_btn') %></a>
+      <details class="menu">
+        <summary class="avatar <%= avatarClass(user.display_name) %>" aria-label="<%= t('account') %>"><%= user.display_name.slice(0, 1).toUpperCase() %></summary>
+        <div class="menu-pop">
+          <p class="menu-who"><strong><%= user.display_name %></strong><span class="muted small"><%= user.email %></span></p>
+          <a href="<%= prefix %>/me"><%- icon('user', 16) %> <%= t('nav_profile') %></a>
+          <a href="<%= prefix %>/bookmarks"><%- icon('bookmark', 16) %> <%= t('nav_bookmarks') %></a>
+          <a href="<%= prefix %>/history"><%- icon('history', 16) %> <%= t('nav_history') %></a>
+          <% if (user.role !== 'reader') { %><a href="/admin"><%- icon('globe', 16) %> <%= t('admin') %></a><% } %>
+          <form method="post" action="<%= prefix %>/logout"><input type="hidden" name="_csrf" value="<%= csrf %>"><button type="submit"><%- icon('out', 16) %> <%= t('logout') %></button></form>
+        </div>
+      </details>
+      <% } else { %>
+      <a class="btn ghost small" href="<%= prefix %>/login?next=<%= encodeURIComponent(currentUrl) %>"><%= t('login') %></a>
+      <a class="btn small hide-sm" href="<%= prefix %>/signup?next=<%= encodeURIComponent(currentUrl) %>"><%= t('signup') %></a>
+      <% } %>
+    </div>
+  </div>
+  <div class="wrap mast-title">
+    <a class="wordmark" href="<%= prefix %>/"><% if (siteAll.theme_logo) { %><img src="<%= siteAll.theme_logo %>" alt="<%= site.site_title %>"><% } else { %><%= site.site_title %><% } %></a>
+    <form class="search" action="<%= prefix %>/search" role="search">
+      <%- icon('search', 16) %>
+      <input type="search" name="q" placeholder="<%= t('search_ph') %>" aria-label="<%= t('search_label') %>" value="<%= typeof query !== 'undefined' ? query : '' %>">
+      <kbd>/</kbd>
+    </form>
+  </div>
+</header>
+<%- include('nav') %>
+<div class="wrap page <%= locals.norail ? 'solo' : '' %>">
+<main id="main" class="main">
