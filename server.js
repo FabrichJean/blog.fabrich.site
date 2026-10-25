@@ -12,6 +12,15 @@ const notify = require('./src/notify');
 const adminRouter = require('./src/routes/admin');
 const publicRouter = require('./src/routes/public');
 
+// Régénère le HTML des articles dont le code n'est pas encore coloré (idempotent).
+(function rehighlight() {
+  const { db } = require('./src/db');
+  const rows = db.prepare("SELECT id, body_md FROM posts WHERE body_md LIKE '%```%' AND body_html LIKE '%<pre>%' AND body_html NOT LIKE '%hljs%'").all();
+  const upd = db.prepare('UPDATE posts SET body_html = ? WHERE id = ?');
+  db.transaction(() => { for (const r of rows) upd.run(util.renderMarkdown(r.body_md), r.id); })();
+  if (rows.length) console.log(`Coloration du code appliquée à ${rows.length} article(s).`);
+})();
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const isProd = process.env.NODE_ENV === 'production';
