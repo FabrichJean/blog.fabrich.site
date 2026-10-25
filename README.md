@@ -1,0 +1,100 @@
+# Plateforme de blog
+
+Un fil d'articles façon [daily.dev](https://daily.dev), habillé en **gazette éditoriale** : papier et encre (clair/sombre), titres en serif expressif (Fraunces), grille « une + cartes », couvertures génératives, onglets **Pour vous / Populaires / Récents**, votes, favoris, historique et séries de lecture, abonnements aux tags et sources, agrégation de flux RSS et liens proposés par les lecteurs.
+
+Blog complet en Node.js : Express, SQLite (fichier unique), EJS, Markdown. Aucun service externe.
+
+## Démarrage
+
+```bash
+npm install
+cp .env.example .env     # facultatif
+npm start                # http://localhost:3000
+```
+
+À la première visite, `/admin` redirige vers **/admin/setup** pour créer le compte administrateur.
+Le port se règle dans `.env` (`PORT`) ou en ligne : `PORT=3457 npm start`.
+
+## Fonctionnalités
+
+**Site public** : accueil paginé, article (temps de lecture, vues, articles voisins et liés), catégories, tags, pages auteur, recherche, commentaires, flux RSS (`/rss.xml`), `sitemap.xml`, `robots.txt`, balises SEO / Open Graph, thème clair/sombre automatique, responsive.
+
+**Administration** (`/admin`) :
+- Tableau de bord (stats, derniers articles, plus lus)
+- Articles : éditeur Markdown (barre d'outils, raccourcis Ctrl/Cmd+B/I/K, aperçu fidèle, upload d'images), brouillon / publié / **programmé** (date future), catégorie, tags, extrait, slug, image de couverture
+- Catégories, modération des commentaires (approuver / spam / supprimer), utilisateurs, réglages du site, profil et mot de passe
+- Rôles : **admin** (tout) et **auteur** (ses propres articles uniquement)
+
+**Sécurité** : mots de passe bcrypt, sessions en base (cookie HttpOnly + SameSite), jeton CSRF sur toutes les actions admin, limitation des tentatives de connexion, HTML Markdown assaini (sanitize-html), CSP et en-têtes via helmet, uploads limités aux images (5 Mo, noms aléatoires), commentaires échappés avec pot de miel, délai minimal et limitation par IP.
+
+## Fil, comptes lecteurs et interactions
+
+- **Look** : thème clair/sombre (préférence du système, bascule mémorisée ; `?theme=light|dark` pour forcer), polices auto-hébergées (`public/fonts`, licence OFL), barre de rubriques collante, « À la une » + grille, couverture générative quand l'article n'a pas d'image, barre de progression de lecture, barre d'onglets sur mobile.
+- **Raccourcis clavier** : `/` recherche, `j` / `k` carte suivante / précédente, `u` voter, `b` favori, `o` ouvrir.
+- **Démo** : `DATA_DIR=./data-demo UPLOAD_DIR=./data-demo/uploads npm run demo` remplit une base vide avec des articles, sources et comptes d'essai (`demo@example.com` / `lecteur@example.com`, mot de passe `demodemo`).
+- **Comptes lecteurs** (`/signup`, `/login`) : votes (▲), favoris, historique, **série de lecture** (jours consécutifs), profil, suppression du compte. Les lecteurs n'ont pas accès à `/admin`. Pas de vérification d'e-mail à l'inscription (limitée par IP) : si le spam devient un sujet, gardez la modération des commentaires activée.
+- **Pour vous** : classement calculé à partir des tags/sources/auteurs suivis, des tags des articles votés ou mis en favori, de la fraîcheur et de la popularité ; les articles déjà lus remontent moins. **Populaires** : engagement (votes, commentaires, vues) pondéré par l'âge. Le classement porte sur les 500 articles publiés les plus récents de la langue.
+- **Explorer** : `/tags` et `/sources` avec boutons Suivre.
+- **Sources RSS** (admin > Sources) : import automatique de flux RSS/Atom (toutes les `FEED_REFRESH_MINUTES` min, 60 par défaut, 0 pour désactiver). Seuls titre, résumé, image HTTPS et tags sont repris ; la fiche mène à l'article d'origine et reste ouverte aux votes et commentaires (non indexée). Les adresses internes (localhost, réseau privé, métadonnées cloud) sont refusées, y compris après redirection.
+- **Liens proposés** : un lecteur connecté propose une URL (`/submit`, 5 en attente max), un admin la valide (titre/description/image repris de la page si besoin) ; elle apparaît dans la source « Communauté ».
+
+## Multilingue
+
+Activez des langues dans **Réglages** (français, anglais, espagnol fournis ; `src/i18n.js` pour en ajouter). La langue par défaut garde les URLs sans préfixe, les autres vivent sous `/en/…`, `/es/…`.
+
+- Chaque article a une langue ; les **traductions** sont liées entre elles (menu « Traduction de… » ou lien « Créer la version English » dans l'éditeur).
+- Sélecteur de langue dans l'en-tête (mène à la traduction de l'article si elle existe), balises `hreflang`, RSS et sitemap par langue.
+- Catégories et tags sont propres à chaque langue ; titre, description et pied de page se règlent par langue.
+- L'interface d'administration reste en français.
+
+## Newsletter
+
+Formulaire d'inscription dans la barre latérale, double confirmation par e-mail, désinscription en un clic (lien dans chaque e-mail + en-tête `List-Unsubscribe`), liste et export CSV dans **Newsletter**.
+Un article publié s'envoie aux abonnés de sa langue depuis son écran d'édition (admin). Il faut configurer `SMTP_URL` et `MAIL_FROM` ; sans cela, les inscriptions sont directes et l'envoi est désactivé.
+
+## Brouillons partagés
+
+Dans l'éditeur, « Partage privé » crée un lien secret `/preview/<jeton>` qui permet de relire un brouillon (non indexé, révocable ou régénérable à tout moment).
+
+## Export / import
+
+**Export / import** (admin) télécharge un JSON (articles, tags, langues et traductions, catégories, commentaires, option images de couverture). L'import ajoute sans écraser (les slugs existants sont ignorés), de façon atomique ; le HTML est régénéré depuis le Markdown. Comptes, réglages et abonnés ne sont pas exportés.
+
+## Thème
+
+Dans **Réglages > Apparence** : couleur d'accent (clair/sombre, texte automatiquement lisible), police de l'interface (Schibsted Grotesk, Fraunces ou JetBrains Mono), logo. Servi par `/theme.css`, valeurs validées côté serveur.
+
+## Configuration (.env)
+
+| Variable | Rôle |
+|---|---|
+| `PORT` | Port d'écoute (3000) |
+| `SITE_URL` | URL publique, pour RSS / sitemap / canonical |
+| `NODE_ENV=production` | Cookies `Secure` + HSTS (à utiliser derrière HTTPS) |
+| `TRUST_PROXY=true` | Derrière nginx / Caddy (IP réelle pour les limiteurs) |
+| `DATA_DIR`, `UPLOAD_DIR` | Emplacement de la base SQLite et des images |
+| `SMTP_URL`, `MAIL_FROM` | Envoi des e-mails de la newsletter |
+| `FEED_REFRESH_MINUTES` | Fréquence d'import des flux RSS (60 ; 0 = désactivé) |
+
+## Déploiement
+
+Lancez `NODE_ENV=production npm start` derrière un reverse proxy HTTPS (Caddy, nginx), avec `TRUST_PROXY=true`.
+**Sauvegarde** : copiez `data/` et `uploads/`. Les dates « programmé » utilisent l'heure du serveur.
+
+## Structure
+
+```
+server.js            app Express (middlewares, sécurité)
+src/db.js            schéma SQLite et réglages
+src/auth.js          sessions, CSRF, rôles
+src/posts.js         requêtes d'articles, tags, traductions, barre latérale
+src/lang.js, i18n.js langues, préfixes d'URL, textes traduits
+src/newsletter.js    inscriptions et envois (src/mail.js : SMTP)
+src/engage.js        votes, favoris, abonnements, lectures, séries
+src/feeds.js         import RSS/Atom, liens soumis (src/safe-fetch.js : anti-SSRF)
+src/theme.js         CSS du thème
+src/util.js          slugs, Markdown, dates, limiteur
+src/routes/public.js site public, RSS, sitemap
+src/routes/admin.js  administration
+views/  public/      templates EJS, CSS et JS
+```

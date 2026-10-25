@@ -1,0 +1,21 @@
+<% const ext = Boolean(p.external_url); const name = p.source_name || p.author_name; const v = locals.v || 'std'; const col = avatarClass(p.title);
+   const lead = p.excerpt || (!ext ? p.body_html.replace(/<[^>]+>/g, ' ').replace(/&[a-z#0-9]+;/g, ' ').replace(/\s+/g, ' ').trim() : ''); %>
+<article class="card <%= v %>" data-card data-id="<%= p.id %>">
+  <a class="media" href="<%= prefix %>/post/<%= p.slug %>" tabindex="-1" aria-hidden="true">
+    <div class="ph <%= col %>"><span><%= name.slice(0, 1).toUpperCase() %></span></div>
+    <% if (p.cover) { %><img src="<%= p.cover %>" alt="" loading="<%= v === 'hero' ? 'eager' : 'lazy' %>" referrerpolicy="no-referrer"><% } %>
+    <% if (ext) { %><span class="badge-ext"><%= hostOf(p.external_url) %></span><% } %>
+  </a>
+  <div class="body">
+    <p class="meta">
+      <% if (p.source_slug) { %><a href="<%= prefix %>/source/<%= p.source_slug %>"><%= name %></a>
+      <% } else { %><a href="<%= prefix %>/author/<%= p.author_username %>"><%= name %></a><% } %>
+      <i>/</i><time datetime="<%= new Date(p.published_at).toISOString() %>"><%= fmtDate(p.published_at) %></time>
+      <% if (!ext) { %><i>/</i><%= t('min_read', { n: readingTime(p.body_html) }) %><% } %>
+    </p>
+    <h2 class="title"><a href="<%= prefix %>/post/<%= p.slug %>"><%= p.title %></a></h2>
+    <% if (lead && v !== 'side') { %><p class="dek"><%= lead.slice(0, v === 'hero' ? 220 : 130) %><%= lead.length > (v === 'hero' ? 220 : 130) ? '…' : '' %></p><% } %>
+    <% if (p.tags.length) { %><p class="card-tags"><% p.tags.slice(0, 3).forEach(tg => { %><a href="<%= prefix %>/tag/<%= tg.slug %>">#<%= tg.name %></a><% }) %></p><% } %>
+  </div>
+  <%- include('actions', { p, noExt: false }) %>
+</article>
