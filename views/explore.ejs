@@ -1,0 +1,12 @@
+<%- include('partials/head', { norail: true }) %>
+<header class="section-head"><div><h1><%= heading %></h1><p><%= t(kind === 'tag' ? 'explore_tags' : 'explore_sources') %></p></div></header>
+<% if (!items.length) { %><div class="empty"><span class="big">∅</span><span><%= t('no_items') %></span></div><% } %>
+<ul class="chips">
+  <% items.forEach(it => { %>
+  <li class="chip">
+    <span><a class="name" href="<%= it.href %>"><%= it.label %></a><span class="count"><%= t('sources_count', { n: it.n }) %></span></span>
+    <%- include('partials/follow', { f: { kind, id: it.id, following: it.following, compact: true } }) %>
+  </li>
+  <% }) %>
+</ul>
+<%- include('partials/foot', { norail: true }) %>

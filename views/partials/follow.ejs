@@ -1,0 +1,7 @@
+<form method="post" action="<%= prefix %>/follow" class="follow" data-toggle="follow">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <input type="hidden" name="kind" value="<%= f.kind %>"><input type="hidden" name="id" value="<%= f.id %>">
+  <input type="hidden" name="next" value="<%= currentUrl %>">
+  <button type="submit" class="btn small <%= f.following ? 'ghost on' : (f.compact ? 'ghost' : '') %>" aria-pressed="<%= f.following %>" data-compact="<%= f.compact ? '1' : '0' %>"
+    data-label-on="<%= t('following') %>" data-label-off="<%= t('follow') %>"><%= f.following ? t('following') : t('follow') %></button>
+</form>
