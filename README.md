@@ -74,6 +74,15 @@ Dans l'éditeur, « Partage privé » crée un lien secret `/preview/<jeton>` qu
 
 ## Export / import
 
+### Import en masse (admin > Export / import)
+
+- **Plusieurs fichiers Markdown d'un coup** (`.md`, `.markdown`, `.txt` ; 100 par lot, 1 Mo chacun). Chaque fichier est traité séparément : une erreur n'arrête pas le lot, et un **rapport** liste le résultat de chaque fichier (importé, ignoré, erreur, avertissements).
+- **En-tête facultatif** (`---` … `---`) : `title`, `slug`, `date`, `status` (ou `draft: true`), `lang`, `category` (créée si absente), `tags`, `excerpt`, `cover` (URL https), `translation_of` (slug d'un autre article, y compris dans le même lot). Sans titre : premier `#` du texte, sinon nom du fichier. Statut, langue, catégorie et tags par défaut sont réglables pour tout le lot ; une date future programme l'article.
+- Un article dont le slug existe déjà est **ignoré** (rien n'est écrasé). Le HTML est assaini. L'import est **silencieux** : il ne déclenche aucune notification.
+- **Liste de liens** : un lien par ligne (30 max) ; chaque page devient un article externe de la source « Communauté » (titre, description et image lus sur la page, 5 pages en parallèle). Les adresses internes (localhost, IP privées, `.local`) sont refusées, et les liens déjà présents ignorés.
+
+### Export / import JSON
+
 **Export / import** (admin) télécharge un JSON (articles, tags, langues et traductions, catégories, commentaires, option images de couverture). L'import ajoute sans écraser (les slugs existants sont ignorés), de façon atomique ; le HTML est régénéré depuis le Markdown. Comptes, réglages et abonnés ne sont pas exportés.
 
 ## Thème
@@ -112,6 +121,7 @@ src/notify.js        notifications (base + flux temps réel SSE)
 src/otp.js           code de vérification à l'inscription
 src/feeds.js         import RSS/Atom, liens soumis (src/safe-fetch.js : anti-SSRF)
 src/theme.js         CSS du thème
+src/bulk.js          import en masse (Markdown, liens)
 src/util.js          slugs, Markdown, dates, limiteur
 src/routes/public.js site public, RSS, sitemap
 src/routes/admin.js  administration
