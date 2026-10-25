@@ -4,6 +4,7 @@ const posts = require('../posts');
 const newsletter = require('../newsletter');
 const engage = require('../engage');
 const otp = require('../otp');
+const notify = require('../notify');
 const feeds = require('../feeds');
 const bcrypt = require('bcryptjs');
 const { login, logout } = require('../auth');
@@ -240,6 +241,8 @@ router.post('/post/:slug/comment', form, (req, res, next) => {
   const status = site.comments_moderation === '1' && !trusted ? 'pending' : 'approved';
   db.prepare('INSERT INTO comments(post_id, author_name, author_email, body, status, ip, created_at, user_id) VALUES(?,?,?,?,?,?,?,?)')
     .run(post.id, name, email, body, status, req.ip, Date.now(), req.user?.id ?? null);
+  const comment = { user_id: req.user?.id ?? null, author_name: name };
+  if (status === 'pending') notify.staffComment(comment, post); else notify.discussion(comment, post);
   res.redirect(`${prefix}/post/${post.slug}?commented=${status}#comments`);
 });
 
@@ -467,6 +470,42 @@ router.post('/me/delete', form, requireReader, (req, res) => {
   res.redirect(res.locals.prefix + '/');
 });
 
+// ---------- Notifications ----------
+// Flux temps réel (Server-Sent Events) : une connexion longue par onglet.
+router.get('/events', (req, res) => {
+  if (!req.user) return res.status(401).end();
+  const lang = res.locals.langs.includes(req.query.lang) ? req.query.lang : res.locals.lang;
+  notify.stream(req, res, lang);
+});
+
+router.get('/notifications', (req, res) => {
+  const { t, prefix } = res.locals;
+  if (!req.user) return res.redirect(`${prefix}/login?next=${encodeURIComponent(prefix + '/notifications')}`);
+  const perPage = 30; const page = pageNum(req);
+  const total = db.prepare('SELECT COUNT(*) n FROM notifications WHERE user_id = ?').get(req.user.id).n;
+  const pages = Math.max(1, Math.ceil(total / perPage));
+  res.render('notifications', {
+    title: t('n_title'), noindex: true, query: '', norail: true,
+    items: notify.recent(req.user.id, perPage, (Math.min(page, pages) - 1) * perPage), page: Math.min(page, pages), pages, basePath: `${prefix}/notifications`, extra: '',
+  });
+});
+
+// Ouvre une notification : la marque comme lue puis redirige vers sa cible (chemin interne uniquement).
+router.get('/notifications/go/:id', (req, res) => {
+  const { prefix } = res.locals;
+  if (!req.user) return res.redirect(`${prefix}/login`);
+  const row = db.prepare('SELECT * FROM notifications WHERE id = ? AND user_id = ?').get(Number(req.params.id), req.user.id);
+  if (!row) return res.redirect(`${prefix}/notifications`);
+  notify.markRead(req.user.id, row.id);
+  res.redirect(localPath(row.url, `${prefix}/notifications`));
+});
+
+router.post('/notifications/read-all', form, requireReader, (req, res) => {
+  notify.markAll(req.user.id);
+  if (wantsJson(req)) return res.json({ count: 0 });
+  res.redirect(req.backTo);
+});
+
 // ---------- Proposer un lien ----------
 const submitLimiter = rateLimiter({ max: 10, windowMs: 24 * 60 * 60 * 1000 });
 
@@ -491,6 +530,7 @@ router.post('/submit', form, requireReader, (req, res) => {
   if (submitLimiter.hit(String(req.user.id))) return fail('nl_toomany');
   db.prepare('INSERT INTO submissions(user_id, url, title, description, tags, lang, created_at) VALUES(?,?,?,?,?,?,?)')
     .run(req.user.id, url, v.title, v.description, v.tags, v.lang, Date.now());
+  notify.staffSubmission(req.user.display_name, v.title || url.replace(/^https?:\/\//, '').slice(0, 60));
   message(res, res.locals.lang, 'submit_thanks', 200, { title: t('submit_title') });
 });
 

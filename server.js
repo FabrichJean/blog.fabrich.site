@@ -8,6 +8,7 @@ const util = require('./src/util');
 const { applyLang, langMiddleware } = require('./src/lang');
 const { themeCss } = require('./src/theme');
 const { icon, flag } = require('./src/icons');
+const notify = require('./src/notify');
 const adminRouter = require('./src/routes/admin');
 const publicRouter = require('./src/routes/public');
 
@@ -53,6 +54,10 @@ app.use((req, res, next) => {
     avatarClass: (name) => 'c' + ([...String(name)].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 8),
     hostOf: (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } },
   });
+  // Cloche de notifications (site et administration).
+  res.locals.notifCount = req.user ? notify.unreadCount(req.user.id) : 0;
+  res.locals.notifRecent = req.user && !req.path.startsWith('/events') ? notify.recent(req.user.id, 8) : [];
+  res.locals.notifText = (row) => notify.textOf(row, res.locals.lang);
   applyLang(res, res.locals.siteAll.default_lang);
   next();
 });
@@ -82,4 +87,5 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Blog en ligne sur http://localhost:${PORT}  (admin : /admin)`);
   require('./src/feeds').startScheduler();
+  notify.start();
 });

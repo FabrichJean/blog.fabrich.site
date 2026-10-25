@@ -51,7 +51,7 @@ function login(res, userId) {
 }
 
 function logout(req, res) {
-  if (req.sid) db.prepare('DELETE FROM sessions WHERE id = ?').run(req.sid);
+  if (req.sid) { db.prepare('DELETE FROM sessions WHERE id = ?').run(req.sid); require('./notify').closeSession(req.sid); }
   setCookie(res, '', 0);
 }
 
