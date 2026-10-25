@@ -77,6 +77,10 @@ app.use((req, res) => {
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
+  if (String(err.code).startsWith('LIMIT_') && req.originalUrl.startsWith('/admin/backup/import-files')) {
+    const msg = err.code === 'LIMIT_FILE_COUNT' ? 'Trop de fichiers (100 maximum par lot).' : 'Un fichier dépasse 1 Mo : rien n\'a été importé.';
+    return res.redirect('/admin/backup?ok=' + encodeURIComponent('Import impossible : ' + msg));
+  }
   if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'Fichier trop volumineux (5 Mo max).' });
   console.error(err);
   res.status(500);

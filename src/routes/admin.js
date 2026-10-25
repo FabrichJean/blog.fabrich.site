@@ -11,6 +11,7 @@ const newsletter = require('../newsletter');
 const mail = require('../mail');
 const feeds = require('../feeds');
 const notify = require('../notify');
+const bulk = require('../bulk');
 const { safeFetch } = require('../safe-fetch');
 const { LANGS } = require('../i18n');
 const { FONT_LABELS, HEX } = require('../theme');
@@ -46,6 +47,8 @@ function isImageFile(file) {
     return isImageBuffer(b);
   } catch { return false; }
 }
+// Import en masse : jusqu'à 100 fichiers texte de 1 Mo.
+const bulkUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 1024 * 1024, files: bulk.MAX_FILES } });
 const memUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024, files: 1 } });
 
 const loginLimiter = rateLimiter({ max: 10, windowMs: 15 * 60 * 1000 });
@@ -403,8 +406,16 @@ router.post('/newsletter/:id/delete', requireAdmin, form, verifyCsrf, (req, res)
 });
 
 // ---------- Sauvegarde : export / import ----------
+function backupPage(res, extra = {}) {
+  res.render('admin/backup', {
+    title: 'Export / import', report: null,
+    categories: db.prepare('SELECT id, name, lang FROM categories ORDER BY lang, name').all(),
+    maxFiles: bulk.MAX_FILES, maxLinks: bulk.MAX_LINKS, ...extra,
+  });
+}
+
 router.get('/backup', requireAdmin, (req, res) => {
-  res.render('admin/backup', { title: 'Export / import' });
+  backupPage(res);
 });
 
 router.get('/backup/export', requireAdmin, (req, res) => {
@@ -488,11 +499,11 @@ router.post('/backup/import', requireAdmin, memUpload.single('file'), verifyCsrf
         cover = p.cover;
       }
 
-      const id = db.prepare(`INSERT INTO posts(title,slug,excerpt,body_md,body_html,cover,status,category_id,author_id,views,created_at,updated_at,published_at,lang)
-        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+      const id = db.prepare(`INSERT INTO posts(title,slug,excerpt,body_md,body_html,cover,status,category_id,author_id,views,created_at,updated_at,published_at,lang,notified_at)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
         title, slug, str(p.excerpt, 400), md, renderMarkdown(md), cover, p.status === 'published' ? 'published' : 'draft',
         catId.get(slugify(str(p.category_slug, 80))) || null, users.get(p.author_username) || req.user.id,
-        Math.max(0, int(p.views) || 0), int(p.created_at) || now, int(p.updated_at) || now, int(p.published_at), lang,
+        Math.max(0, int(p.views) || 0), int(p.created_at) || now, int(p.updated_at) || now, int(p.published_at), lang, now, // notified_at : import silencieux
       ).lastInsertRowid;
       const g = int(p.translation_group);
       const clash = g !== null && groups.has(g) && db.prepare('SELECT 1 FROM posts WHERE translation_group = ? AND lang = ?').get(groups.get(g), lang);
@@ -610,6 +621,28 @@ router.post('/submissions/:id/reject', requireAdmin, form, verifyCsrf, (req, res
   db.prepare("UPDATE submissions SET status = 'rejected', reviewed_at = ? WHERE id = ? AND status = 'pending'").run(Date.now(), req.params.id);
   if (sub) notify.submissionReviewed(sub, null);
   flashRedirect(res, '/admin/submissions', 'Proposition refusée.');
+});
+
+// Import en masse : plusieurs fichiers Markdown d'un coup (en-tête facultatif), rapport fichier par fichier.
+const bulkOpts = (req, res) => ({
+  status: req.body.status === 'published' ? 'published' : 'draft',
+  lang: res.locals.langs.includes(req.body.lang) ? req.body.lang : defaultLang(res),
+  categoryId: Number(req.body.category_id) || null,
+  tags: bulk.toList(req.body.tags),
+});
+
+router.post('/backup/import-files', requireAdmin, bulkUpload.array('files', bulk.MAX_FILES), verifyCsrf, (req, res) => {
+  if (!req.files?.length) return flashRedirect(res, '/admin/backup', 'Aucun fichier reçu.');
+  const report = { kind: 'files', ...bulk.importFiles(req.files, bulkOpts(req, res), req.user.id) };
+  if (report.counts.created) notify.checkPublished();
+  backupPage(res, { report });
+});
+
+router.post('/backup/import-links', requireAdmin, form, verifyCsrf, async (req, res) => {
+  if (!String(req.body.urls || '').trim()) return flashRedirect(res, '/admin/backup', 'Aucun lien reçu.');
+  const opts = bulkOpts(req, res);
+  const report = { kind: 'links', ...(await bulk.importLinks(req.body.urls, opts, communitySource(opts.lang).id)) };
+  backupPage(res, { report });
 });
 
 // ---------- Utilisateurs (admin) ----------
