@@ -137,6 +137,22 @@ CREATE TABLE IF NOT EXISTS submissions (
   created_at INTEGER NOT NULL,
   reviewed_at INTEGER
 );
+CREATE TABLE IF NOT EXISTS signup_otps (
+  token TEXT PRIMARY KEY,
+  email TEXT NOT NULL,
+  display_name TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  lang TEXT NOT NULL DEFAULT 'fr',
+  next TEXT NOT NULL DEFAULT '',
+  salt TEXT NOT NULL,
+  code_hash TEXT NOT NULL,
+  expires INTEGER NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  sends INTEGER NOT NULL DEFAULT 1,
+  last_sent INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_otps_email ON signup_otps(email);
 CREATE TABLE IF NOT EXISTS subscribers (
   id INTEGER PRIMARY KEY,
   email TEXT NOT NULL UNIQUE,
