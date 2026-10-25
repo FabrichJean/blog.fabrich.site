@@ -70,3 +70,8 @@ body.admin { background: var(--paper); }
 .preview { background: var(--card); border: 2px solid var(--line); border-radius: var(--radius); padding: 28px; min-height: 480px; }
 .thumb { border-radius: var(--radius-sm); border: 2px solid var(--line); margin-bottom: 8px; }
 .notif-link { position: relative; text-decoration: none; }
+.sub-h { margin: 36px 0 14px; font-size: 1.6rem; font-style: italic; }
+.report { margin-bottom: 24px; } .stats-line { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+.badge.err { background: var(--err-bg); color: var(--err); }
+.report .break { word-break: break-all; max-width: 280px; } .warn { color: var(--danger); }
+.how { margin-top: 14px; } .how summary { cursor: pointer; font-weight: 700; } .how pre { background: var(--paper-2); border: 1.5px solid var(--hair); border-radius: var(--radius-sm); padding: 12px; overflow-x: auto; font: .8rem/1.5 var(--mono); }

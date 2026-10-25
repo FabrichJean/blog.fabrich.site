@@ -1,5 +1,34 @@
 <%- include('../partials/admin-head', { path: '/backup' }) %>
 <h1>Export / import</h1>
+
+<% if (report) { %>
+<section class="panel report">
+  <h3><%= report.kind === 'files' ? 'Résultat de l\'import de fichiers' : 'Résultat de l\'import de liens' %></h3>
+  <p class="stats-line">
+    <span class="badge published"><%= report.counts.created %> importé<%= report.counts.created > 1 ? 's' : '' %></span>
+    <span class="badge"><%= report.counts.skipped %> ignoré<%= report.counts.skipped > 1 ? 's' : '' %></span>
+    <span class="badge <%= report.counts.error ? 'err' : '' %>"><%= report.counts.error %> en erreur</span>
+  </p>
+  <% if (report.truncated) { %><p class="notice err">Lot tronqué : seuls les <%= report.kind === 'files' ? maxFiles : maxLinks %> premiers éléments ont été traités. Relancez avec le reste.</p><% } %>
+  <table class="table">
+    <thead><tr><th><%= report.kind === 'files' ? 'Fichier' : 'Lien' %></th><th>Titre</th><th>Résultat</th></tr></thead>
+    <tbody>
+    <% report.rows.forEach(r => { %>
+      <tr>
+        <td class="break"><%= r.name %></td>
+        <td><% if (r.postId) { %><a href="/admin/posts/<%= r.postId %>/edit"><%= r.title %></a><% } else { %><%= r.title || '—' %><% } %></td>
+        <td>
+          <span class="badge <%= r.status === 'created' ? 'published' : (r.status === 'error' ? 'err' : '') %>"><%= r.status === 'created' ? 'importé' : (r.status === 'skipped' ? 'ignoré' : 'erreur') %></span>
+          <span class="small"><%= r.message %></span>
+          <% r.warnings.forEach(w => { %><br><span class="small warn">⚠ <%= w %></span><% }) %>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+</section>
+<% } %>
+
 <div class="cols">
   <section class="panel">
     <h3>Exporter</h3>
@@ -12,14 +41,70 @@
     <p class="small muted">Sans les images, seules les adresses des couvertures sont conservées. Pour une sauvegarde complète du serveur, copiez aussi les dossiers <code>data/</code> et <code>uploads/</code>.</p>
   </section>
   <section class="panel">
-    <h3>Importer</h3>
-    <p>Ajoute le contenu d'un export. Les articles dont l'adresse (slug) existe déjà sont ignorés, rien n'est écrasé. L'import est tout ou rien.</p>
+    <h3>Importer un export (JSON)</h3>
+    <p>Ajoute le contenu d'un export de ce blog. Les articles dont l'adresse (slug) existe déjà sont ignorés, rien n'est écrasé. L'import est tout ou rien.</p>
     <form method="post" enctype="multipart/form-data" action="/admin/backup/import" class="form">
       <input type="hidden" name="_csrf" value="<%= csrf %>">
       <label>Fichier JSON <input type="file" name="file" accept="application/json,.json" required></label>
       <button class="btn" data-confirm="Importer ce fichier dans le blog ?">Importer</button>
     </form>
     <p class="small muted">Les articles dont l'auteur n'existe pas ici vous sont attribués. Taille maximale : 50 Mo.</p>
+  </section>
+</div>
+
+<h2 class="sub-h">Import en masse</h2>
+<div class="cols">
+  <section class="panel">
+    <h3>Plusieurs articles Markdown à la fois</h3>
+    <form method="post" enctype="multipart/form-data" action="/admin/backup/import-files" class="form">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <label>Fichiers <small class="muted">(.md, .markdown, .txt · <%= maxFiles %> max, 1 Mo chacun)</small>
+        <input type="file" name="files" accept=".md,.markdown,.txt,text/markdown,text/plain" multiple required></label>
+      <div class="row">
+        <label>Statut par défaut
+          <select name="status"><option value="draft">Brouillon</option><option value="published">Publié</option></select></label>
+        <label>Langue par défaut
+          <select name="lang"><% langs.forEach(l => { %><option value="<%= l %>"><%= langNames[l] %></option><% }) %></select></label>
+      </div>
+      <div class="row">
+        <label>Catégorie par défaut
+          <select name="category_id"><option value="">— Aucune —</option><% categories.forEach(c => { %><option value="<%= c.id %>"><%= c.name %><%= langs.length > 1 ? ' [' + c.lang.toUpperCase() + ']' : '' %></option><% }) %></select></label>
+        <label>Tags ajoutés à tous <small class="muted">(virgules)</small> <input name="tags" maxlength="120" placeholder="import, archive"></label>
+      </div>
+      <button class="btn" data-confirm="Importer ces fichiers ?">Importer les fichiers</button>
+    </form>
+    <details class="how">
+      <summary>Format des fichiers (en-tête facultatif)</summary>
+<pre>---
+title: Mon article
+slug: mon-article
+date: 2026-11-02
+status: published
+lang: fr
+category: Ingénierie
+tags: [rust, web]
+excerpt: Résumé court
+cover: https://exemple.com/image.jpg
+translation_of: my-article
+---
+# Contenu en Markdown…</pre>
+      <p class="small muted">Tout est facultatif. Sans titre, le premier <code>#</code> du texte (ou le nom du fichier) est utilisé. Sans <code>status</code>, le statut par défaut s'applique ; une date future programme l'article. Une catégorie inconnue est créée. Un article dont l'adresse existe déjà est ignoré. <code>translation_of</code> relie l'article à la traduction d'un autre (par son slug, y compris dans le même lot). L'import ne déclenche aucune notification.</p>
+    </details>
+  </section>
+  <section class="panel">
+    <h3>Liste de liens externes</h3>
+    <p>Un lien par ligne (<%= maxLinks %> max). Chaque page devient un article de la source « Communauté » : titre, description et image sont lus sur la page.</p>
+    <form method="post" action="/admin/backup/import-links" class="form">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <label>Liens <textarea name="urls" rows="7" required placeholder="https://exemple.com/article-1&#10;https://exemple.com/article-2"></textarea></label>
+      <div class="row">
+        <label>Langue des articles
+          <select name="lang"><% langs.forEach(l => { %><option value="<%= l %>"><%= langNames[l] %></option><% }) %></select></label>
+        <label>Tags ajoutés <small class="muted">(virgules)</small> <input name="tags" maxlength="120" placeholder="lecture, outils"></label>
+      </div>
+      <button class="btn" data-confirm="Importer ces liens ? Chaque page est consultée par le serveur.">Importer les liens</button>
+    </form>
+    <p class="small muted">Les adresses internes (localhost, réseau privé) sont refusées. Les liens déjà présents sont ignorés. Leur récupération peut prendre quelques secondes.</p>
   </section>
 </div>
 <%- include('../partials/admin-foot') %>
