@@ -1,0 +1,35 @@
+<%- include('../partials/admin-head', { path: '/' }) %>
+<h1>Tableau de bord</h1>
+<div class="stats">
+  <div><b><%= stats.published %></b><span>Publiés</span></div>
+  <div><b><%= stats.drafts %></b><span>Brouillons</span></div>
+  <div><b><%= stats.views %></b><span>Vues</span></div>
+  <% if (user.role === 'admin') { %>
+  <div><b><%= stats.comments %></b><span>Commentaires</span></div>
+  <a href="/admin/comments"><b><%= stats.pending %></b><span>À modérer</span></a>
+  <a href="/admin/newsletter"><b><%= stats.subscribers %></b><span>Abonnés</span></a>
+  <a href="/admin/submissions"><b><%= stats.submissions %></b><span>Liens proposés</span></a>
+  <a href="/admin/sources"><b><%= stats.sources %></b><span>Sources actives</span></a>
+  <a href="/admin/users?role=reader"><b><%= stats.readers %></b><span>Lecteurs inscrits</span></a>
+  <% } %>
+</div>
+<div class="cols">
+  <section>
+    <h2>Dernières modifications</h2>
+    <% if (!recent.length) { %><p class="muted">Aucun article. <a href="/admin/posts/new">Écrire le premier</a>.</p><% } %>
+    <ul class="plain list">
+      <% recent.forEach(p => { %>
+      <li><a href="/admin/posts/<%= p.id %>/edit"><%= p.title %></a>
+        <span class="badge <%= p.status %>"><%= p.status === 'published' ? 'publié' : 'brouillon' %></span>
+        <span class="muted"><%= fmtDateTime(p.updated_at) %></span></li>
+      <% }) %>
+    </ul>
+  </section>
+  <section>
+    <h2>Les plus lus</h2>
+    <ul class="plain list">
+      <% top.forEach(p => { %><li><a href="/admin/posts/<%= p.id %>/edit"><%= p.title %></a> <span class="muted"><%= p.views %> vues</span></li><% }) %>
+    </ul>
+  </section>
+</div>
+<%- include('../partials/admin-foot') %>

@@ -1,0 +1,29 @@
+<%- include('../partials/admin-head', { path: '/submissions' }) %>
+<h1>Liens proposés</h1>
+<% pending.forEach(s => { %>
+<div class="panel comment-row">
+  <p class="meta">Par <strong><%= s.user_name %></strong> · <%= fmtDateTime(s.created_at) %> · <%= s.lang.toUpperCase() %></p>
+  <p><a href="<%= s.url %>" target="_blank" rel="noopener nofollow"><%= s.url %></a></p>
+  <% if (s.description) { %><p class="pre"><%= s.description %></p><% } %>
+  <% if (s.tags) { %><p class="small muted">Tags : <%= s.tags %></p><% } %>
+  <form method="post" action="/admin/submissions/<%= s.id %>/approve" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <label>Titre <small class="muted">(vide : repris de la page)</small> <input name="title" maxlength="200" value="<%= s.title %>"></label>
+    <p class="btn-row">
+      <button class="btn">Publier</button>
+      <button class="btn ghost danger" formaction="/admin/submissions/<%= s.id %>/reject">Refuser</button>
+    </p>
+  </form>
+</div>
+<% }) %>
+<% if (!pending.length) { %><p class="muted">Aucune proposition en attente.</p><% } %>
+<% if (done.length) { %>
+<h2>Traitées récemment</h2>
+<table class="table">
+  <tbody><% done.forEach(s => { %>
+    <tr><td><span class="badge <%= s.status === 'approved' ? 'published' : '' %>"><%= s.status === 'approved' ? 'publié' : 'refusé' %></span></td>
+    <td><a href="<%= s.url %>" target="_blank" rel="noopener nofollow"><%= s.url.slice(0, 70) %></a></td><td><%= s.user_name %></td><td><%= fmtDateTime(s.reviewed_at) %></td></tr>
+  <% }) %></tbody>
+</table>
+<% } %>
+<%- include('../partials/admin-foot') %>
