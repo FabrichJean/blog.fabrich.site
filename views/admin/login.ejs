@@ -1,0 +1,16 @@
+<%- include('../partials/admin-head', { path: '' }) %>
+<div class="auth">
+  <div class="auth-art"><h2><%= site.site_title %></h2><ul><li>Espace de rédaction</li></ul></div>
+  <div class="auth-form">
+    <h1>Connexion</h1>
+    <% if (error) { %><p class="notice err" role="alert"><%= error %></p><% } %>
+    <form method="post" action="/admin/login" class="form">
+      <input type="hidden" name="next" value="<%= next %>">
+      <label>Identifiant ou e-mail <input name="username" required autofocus autocomplete="username"></label>
+      <label>Mot de passe <input type="password" name="password" required autocomplete="current-password"></label>
+      <div><button class="btn" type="submit">Se connecter</button></div>
+    </form>
+    <p class="small"><a href="/">← Retour au site</a></p>
+  </div>
+</div>
+<%- include('../partials/admin-foot') %>

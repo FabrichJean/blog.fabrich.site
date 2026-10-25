@@ -1,0 +1,19 @@
+<%- include('../partials/admin-head', { path: '' }) %>
+<div class="auth">
+  <div class="auth-art"><h2>Bienvenue.</h2><ul><li>Créez le compte administrateur</li><li>Écrivez en Markdown</li><li>Publiez en plusieurs langues</li></ul></div>
+  <div class="auth-form">
+    <h1>Installation</h1>
+    <% if (error) { %><p class="notice err" role="alert"><%= error %></p><% } %>
+    <form method="post" action="/admin/setup" class="form">
+      <label>Titre du blog <input name="site_title" maxlength="80" value="<%= v.site_title || '' %>" placeholder="Mon blog"></label>
+      <label>Nom affiché <input name="display_name" required maxlength="60" value="<%= v.display_name || '' %>"></label>
+      <div class="row">
+        <label>Identifiant <input name="username" required maxlength="40" autocomplete="username" value="<%= v.username || '' %>"></label>
+        <label>E-mail <input type="email" name="email" required value="<%= v.email || '' %>"></label>
+      </div>
+      <label>Mot de passe (8 caractères min.) <input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
+      <div><button class="btn" type="submit">Créer mon blog</button></div>
+    </form>
+  </div>
+</div>
+<%- include('../partials/admin-foot') %>
