@@ -1,0 +1,7 @@
+<%- include('partials/head', { query: '', description: null, norail: true }) %>
+<div class="msg">
+  <h1>404 — <%= t('not_found') %></h1>
+  <p><%= t('not_found_text') %></p>
+  <p><a class="btn" href="<%= prefix %>/"><%= t('back_home') %></a></p>
+</div>
+<%- include('partials/foot', { norail: true }) %>
