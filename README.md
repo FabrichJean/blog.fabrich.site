@@ -27,6 +27,18 @@ Le port se règle dans `.env` (`PORT`) ou en ligne : `PORT=3457 npm start`.
 
 **Sécurité** : mots de passe bcrypt, sessions en base (cookie HttpOnly + SameSite), jeton CSRF sur toutes les actions admin, limitation des tentatives de connexion, HTML Markdown assaini (sanitize-html), CSP et en-têtes via helmet, uploads limités aux images (5 Mo, noms aléatoires), commentaires échappés avec pot de miel, délai minimal et limitation par IP.
 
+## Notifications en temps réel
+
+Une cloche (site et administration) affiche le nombre de notifications non lues ; une pastille apparaît en direct dans tous les onglets ouverts, sans recharger la page (Server-Sent Events sur `/events`, aucune dépendance en plus). Liste déroulante, page `/notifications`, « tout marquer comme lu », compteur dans le titre de l'onglet, textes dans la langue de la page.
+
+| Pour qui | Événement |
+|---|---|
+| Lecteur | son commentaire est approuvé · quelqu'un d'autre commente une discussion où il a écrit · son lien proposé est publié ou refusé |
+| Lecteur | un nouvel article est publié dans un **tag** ou par un **auteur** qu'il suit (aussi à l'heure d'un article programmé) · **une seule** notification par import RSS pour une **source** suivie |
+| Admin | un commentaire attend la modération · un lien est proposé |
+
+Détails : un article n'est notifié qu'une fois (jamais l'auteur lui-même), les anciens articles ne déclenchent rien à la mise à jour, les notifications de plus de 60 jours sont purgées, une notification n'est lisible que par son destinataire. **Limite** : les connexions temps réel sont gardées en mémoire du processus, donc une seule instance du serveur (pour plusieurs instances, il faudrait un bus type Redis). Derrière nginx, désactivez le buffering sur `/events` (`proxy_buffering off;`, l'en-tête `X-Accel-Buffering: no` est déjà envoyé).
+
 ## Landing page
 
 Les visiteurs non connectés qui arrivent sur l'accueil (`/`, `/en/`…) voient une page de présentation : accroche, aperçu des articles du moment, chiffres réels (articles, sources, tags), fonctionnalités, étapes, FAQ et appel à l'inscription. Le fil reste accessible via `/?tab=popular`, et les lecteurs connectés arrivent directement sur le fil. Désactivable dans **Réglages** (« Page de présentation… »). Textes dans `src/i18n.js` (clés `land_*`, en français, anglais et espagnol).
@@ -96,6 +108,8 @@ src/posts.js         requêtes d'articles, tags, traductions, barre latérale
 src/lang.js, i18n.js langues, préfixes d'URL, textes traduits
 src/newsletter.js    inscriptions et envois (src/mail.js : SMTP)
 src/engage.js        votes, favoris, abonnements, lectures, séries
+src/notify.js        notifications (base + flux temps réel SSE)
+src/otp.js           code de vérification à l'inscription
 src/feeds.js         import RSS/Atom, liens soumis (src/safe-fetch.js : anti-SSRF)
 src/theme.js         CSS du thème
 src/util.js          slugs, Markdown, dates, limiteur
